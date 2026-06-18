@@ -60,25 +60,37 @@ export default function Users() {
   );
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Usuarios</h1>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{profiles.length} usuarios registrados</p>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Usuarios</h1>
+        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{profiles.length} usuarios registrados</p>
       </div>
 
-      <div className="card p-4 callout-info">
-        <p className="text-sm">
+      {/* Info Callout */}
+      <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', fontSize: '0.875rem' }}>
+        <p style={{ margin: 0 }}>
           <strong>Nota:</strong> Los nuevos usuarios se registran desde la pantalla de inicio de sesión. El primer usuario registrado es automáticamente administrador.
         </p>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar usuario..." className="input pl-9" />
+      {/* Search */}
+      <div style={{ position: 'relative', width: '100%' }}>
+        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar usuario..."
+          className="input"
+          style={{ paddingLeft: '2.25rem' }}
+        />
       </div>
 
+      {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-brand-600)' }} /></div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+        </div>
       ) : (
         <div className="table-container">
           <table className="table">
@@ -88,61 +100,98 @@ export default function Users() {
                 <th>Rol</th>
                 <th>Estado</th>
                 <th>Miembro desde</th>
-                <th className="text-right">Acciones</th>
+                <th style={{ textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${p.role === 'admin' ? '' : 'bg-gray-500'}`} style={p.role === 'admin' ? { background: 'var(--color-brand-600)' } : undefined}>
-                        {p.full_name?.charAt(0)?.toUpperCase() || '?'}
-                      </div>
-                      <div>
-                        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{p.full_name || 'Sin nombre'}</p>
-                        {p.id === currentProfile?.id && (
-                          <span style={{ color: 'var(--color-brand-600)' }}>Tú</span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-1.5">
-                      {p.role === 'admin' ? (
-                        <Shield className="w-3.5 h-3.5" style={{ color: 'var(--color-brand-600)' }} />
-                      ) : (
-                        <User className="w-3.5 h-3.5 text-gray-400" />
-                      )}
-                      <span className={`badge ${p.role === 'admin' ? 'badge-brand' : 'badge-neutral'}`}>
-                        {p.role === 'admin' ? 'Administrador' : 'Empleado'}
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${p.active ? 'badge-success' : 'badge-neutral'}`}>
-                      {p.active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{new Date(p.created_at).toLocaleDateString('es-MX')}</td>
-                  <td className="text-right">
-                    <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--text-muted)' }}>
-                      <Pencil className="w-4 h-4" />
-                    </button>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <User style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
+                    Sin usuarios
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div
+                          style={{
+                            width: '2rem',
+                            height: '2rem',
+                            borderRadius: '9999px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ffffff',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            flexShrink: 0,
+                            background: p.role === 'admin' ? '#0b3b4c' : '#64748b',
+                          }}
+                        >
+                          {p.full_name?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                        <div>
+                          <p style={{ fontWeight: 500, color: '#1e293b' }}>{p.full_name || 'Sin nombre'}</p>
+                          {p.id === currentProfile?.id && (
+                            <span style={{ fontSize: '0.75rem', color: '#0b3b4c' }}>Tú</span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                        {p.role === 'admin' ? (
+                          <Shield style={{ width: '0.875rem', height: '0.875rem', color: '#0b3b4c' }} />
+                        ) : (
+                          <User style={{ width: '0.875rem', height: '0.875rem', color: '#94a3b8' }} />
+                        )}
+                        <span className={`badge ${p.role === 'admin' ? 'badge-brand' : 'badge-neutral'}`}>
+                          {p.role === 'admin' ? 'Administrador' : 'Empleado'}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${p.active ? 'badge-success' : 'badge-neutral'}`}>
+                        {p.active ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td style={{ color: '#64748b' }}>{new Date(p.created_at).toLocaleDateString('es-MX')}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        onClick={() => openEdit(p)}
+                        style={{
+                          padding: '0.375rem',
+                          borderRadius: '0.5rem',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          transition: 'color 0.15s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#0b3b4c'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                      >
+                        <Pencil style={{ width: '1rem', height: '1rem' }} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       )}
 
+      {/* Edit Modal */}
       <Modal open={!!editing} onClose={() => setEditing(null)} title="Editar usuario">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label className="label">Nombre completo</label>
             <input {...register('full_name')} className="input" />
-            {errors.full_name && <p className="mt-1 text-xs" style={{ color: 'var(--color-error-500)' }}>{errors.full_name.message}</p>}
+            {errors.full_name && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{errors.full_name.message}</p>}
           </div>
           <div>
             <label className="label">Rol</label>
@@ -151,14 +200,59 @@ export default function Users() {
               <option value="admin">Administrador</option>
             </select>
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="user-active" {...register('active')} className="w-4 h-4 rounded" style={{ accentColor: 'var(--color-brand-600)' }} />
-            <label htmlFor="user-active" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Usuario activo</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              id="user-active"
+              {...register('active')}
+              style={{ width: '1rem', height: '1rem', accentColor: '#0b3b4c' }}
+            />
+            <label htmlFor="user-active" style={{ fontSize: '0.875rem', color: '#64748b' }}>Usuario activo</label>
           </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setEditing(null)} className="btn-secondary flex-1">Cancelar</button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
-              {saving && <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--color-brand-600)' }} />}
+          <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setEditing(null)}
+              style={{
+                flex: 1,
+                padding: '0.5rem 0',
+                borderRadius: '0.5rem',
+                background: '#f1f5f9',
+                color: '#334155',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              style={{
+                flex: 1,
+                padding: '0.5rem 0',
+                borderRadius: '0.5rem',
+                background: '#0b3b4c',
+                color: '#ffffff',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
+              disabled={saving}
+            >
+              {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
               Guardar
             </button>
           </div>

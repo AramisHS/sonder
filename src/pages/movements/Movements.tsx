@@ -45,30 +45,55 @@ export default function Movements() {
   );
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
       <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Historial de movimientos</h1>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Todos los cambios de inventario</p>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Historial de movimientos</h1>
+        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Todos los cambios de inventario</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar producto..." className="input pl-9" />
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+          <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar producto..."
+            className="input"
+            style={{ paddingLeft: '2.25rem' }}
+          />
         </div>
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="input sm:w-44">
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '180px' }}
+        >
           <option value="all">Todos los tipos</option>
           <option value="entry">Entradas</option>
           <option value="sale">Ventas</option>
           <option value="adjustment">Ajustes</option>
           <option value="return">Devoluciones</option>
         </select>
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="input sm:w-44" />
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="input sm:w-44" />
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '150px' }}
+        />
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '150px' }}
+        />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-brand-600)' }} /></div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+        </div>
       ) : (
         <div className="table-container">
           <table className="table">
@@ -87,8 +112,8 @@ export default function Movements() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
-                    <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <ArrowLeftRight style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin movimientos
                   </td>
                 </tr>
@@ -98,21 +123,23 @@ export default function Movements() {
                   const isPositive = m.quantity > 0;
                   return (
                     <tr key={m.id}>
-                      <td className="whitespace-nowrap text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      <td style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', color: '#64748b' }}>
                         {new Date(m.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td><span className={`badge ${t.color}`}>{t.label}</span></td>
-                      <td className="font-medium">{(m.products as { name: string } | null)?.name ?? '—'}</td>
                       <td>
-                        <span className={`flex items-center gap-1 font-semibold`} style={{ color: isPositive ? 'var(--color-brand-600)' : 'var(--color-error-600)' }}>
-                          {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                        <span className={`badge ${t.color}`}>{t.label}</span>
+                      </td>
+                      <td style={{ fontWeight: 500 }}>{(m.products as { name: string } | null)?.name ?? '—'}</td>
+                      <td>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600, color: isPositive ? '#0b3b4c' : '#dc2626' }}>
+                          {isPositive ? <TrendingUp style={{ width: '0.75rem', height: '0.75rem' }} /> : <TrendingDown style={{ width: '0.75rem', height: '0.75rem' }} />}
                           {isPositive ? '+' : ''}{m.quantity} {(m.products as { unit: string } | null)?.unit}
                         </span>
                       </td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{m.stock_before}</td>
-                      <td className="font-semibold">{m.stock_after}</td>
-                      <td className="max-w-xs truncate text-xs" style={{ color: 'var(--text-secondary)' }}>{m.notes ?? '—'}</td>
-                      <td className="text-xs" style={{ color: 'var(--text-secondary)' }}>{(m.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                      <td style={{ color: '#64748b' }}>{m.stock_before}</td>
+                      <td style={{ fontWeight: 600 }}>{m.stock_after}</td>
+                      <td style={{ maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b', fontSize: '0.75rem' }}>{m.notes ?? '—'}</td>
+                      <td style={{ color: '#64748b', fontSize: '0.75rem' }}>{(m.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
                     </tr>
                   );
                 })

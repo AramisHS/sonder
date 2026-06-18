@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
-/* ── Reset y variables ── */
+/* ── 1. VARIABLES (Diseño Atómico) ── */
 :root {
   /* Colores base */
   --color-primary: #0b3b4c;
@@ -34,6 +34,8 @@
   --color-error-bg: #fef2f2;
   --color-error-text: #991b1b;
   --color-info: #0284c7;
+  --color-info-bg: #e0f2fe;
+  --color-info-text: #0369a1;
 
   /* Sombras */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
@@ -52,11 +54,15 @@
   --font-serif: 'Playfair Display', Georgia, serif;
 }
 
-/* ── Base ── */
+/* ── 2. BASE & RESET ── */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -67,32 +73,46 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-gray-300); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-gray-400); }
+main {
+  width: 100% !important;
+  box-sizing: border-box;
+}
 
-/* ── Utilidades de layout ── */
+/* ── 3. SCROLLBAR ── */
+::-webkit-scrollbar { 
+  width: 6px; 
+  height: 6px; 
+}
+::-webkit-scrollbar-track { 
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb { 
+  background: var(--color-gray-300); 
+  border-radius: 9999px; 
+}
+::-webkit-scrollbar-thumb:hover { 
+  background: var(--color-gray-400); 
+}
+
+/* ── 4. LAYOUT & COMPONENTES BASE ── */
 .container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1rem;
 }
 
-/* ── Cards ── */
 .card {
   background: var(--color-white);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-gray-200);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
 .card:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* ── Botones ── */
+/* ── 5. BOTONES ── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -112,56 +132,32 @@ body {
   cursor: not-allowed;
 }
 
-.btn-primary {
-  background: var(--color-primary);
-  color: var(--color-white);
-}
-.btn-primary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-}
+.btn-primary { background: var(--color-primary); color: var(--color-white); }
+.btn-primary:hover:not(:disabled) { background: var(--color-primary-dark); }
 
-.btn-secondary {
-  background: var(--color-gray-100);
-  color: var(--color-gray-700);
-}
-.btn-secondary:hover:not(:disabled) {
-  background: var(--color-gray-200);
-}
+.btn-secondary { background: var(--color-gray-100); color: var(--color-gray-700); }
+.btn-secondary:hover:not(:disabled) { background: var(--color-gray-200); }
 
-.btn-success {
-  background: var(--color-success);
-  color: var(--color-white);
-}
-.btn-success:hover:not(:disabled) {
-  background: #047857;
-}
+.btn-success { background: var(--color-success); color: var(--color-white); }
+.btn-success:hover:not(:disabled) { background: #047857; }
 
-.btn-danger {
-  background: var(--color-error);
-  color: var(--color-white);
-}
-.btn-danger:hover:not(:disabled) {
-  background: #b91c1c;
-}
+.btn-danger { background: var(--color-error); color: var(--color-white); }
+.btn-danger:hover:not(:disabled) { background: #b91c1c; }
 
-.btn-ghost {
-  background: transparent;
-  color: var(--color-gray-500);
-}
-.btn-ghost:hover:not(:disabled) {
-  background: var(--color-gray-100);
-}
+.btn-ghost { background: transparent; color: var(--color-gray-500); }
+.btn-ghost:hover:not(:disabled) { background: var(--color-gray-100); }
 
-/* ── Inputs ── */
+/* ── 6. FORMULARIOS (Inputs & Labels) ── */
 .input {
   width: 100%;
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius-md);
   background: var(--color-gray-50);
   border: 1px solid var(--color-gray-200);
   color: var(--color-gray-800);
   font-size: 0.875rem;
   outline: none;
+  box-sizing: border-box;
   transition: border-color 0.15s, box-shadow 0.15s;
   font-family: var(--font-sans);
 }
@@ -173,15 +169,8 @@ body {
   box-shadow: 0 0 0 3px rgba(11, 59, 76, 0.12);
 }
 
-.input-sm {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.8rem;
-}
-
-.input-lg {
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-}
+.input-sm { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+.input-lg { padding: 0.75rem 1rem; font-size: 1rem; }
 
 .label {
   display: block;
@@ -191,7 +180,7 @@ body {
   margin-bottom: 0.25rem;
 }
 
-/* ── Tablas ── */
+/* ── 7. TABLAS ── */
 .table-container {
   overflow-x: auto;
   border-radius: var(--radius-xl);
@@ -231,7 +220,7 @@ body {
   border-bottom: none;
 }
 
-/* ── Badges ── */
+/* ── 8. BADGES ── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -242,32 +231,14 @@ body {
   white-space: nowrap;
 }
 
-.badge-success {
-  background: var(--color-success-bg);
-  color: var(--color-success-text);
-}
-.badge-warning {
-  background: var(--color-warning-bg);
-  color: var(--color-warning-text);
-}
-.badge-error {
-  background: var(--color-error-bg);
-  color: var(--color-error-text);
-}
-.badge-neutral {
-  background: var(--color-gray-100);
-  color: var(--color-gray-600);
-}
-.badge-info {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-.badge-brand {
-  background: #fef3c7;
-  color: #92400e;
-}
+.badge-brand   { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.badge-warning { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.badge-success { background: var(--color-success-bg); color: var(--color-success-text); }
+.badge-error   { background: var(--color-error-bg); color: var(--color-error-text); }
+.badge-info    { background: var(--color-info-bg); color: var(--color-info-text); }
+.badge-neutral { background: var(--color-gray-100); color: var(--color-gray-600); }
 
-/* ── Login ── */
+/* ── 9. LOGIN PAGE VISTA ── */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -291,8 +262,8 @@ body {
 }
 
 .login-logo {
-  width: 100px;
-  height: 100px;
+  width: 300px;
+  height: 300px;
   object-fit: contain;
   margin-bottom: 0.5rem;
   filter: drop-shadow(0 4px 12px rgba(11,59,76,0.1));
@@ -388,12 +359,10 @@ body {
   transition: border-color 0.15s, box-shadow 0.15s;
   box-sizing: border-box;
 }
-.login-input::placeholder {
-  color: var(--color-gray-400);
-}
+.login-input::placeholder { color: var(--color-gray-400); }
 .login-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(11,59,76,0.12);
+  box-shadow: 0 0 0 3px rgba(11, 59, 76, 0.12);
 }
 
 .login-password-wrapper {
@@ -417,20 +386,10 @@ body {
   align-items: center;
   justify-content: center;
 }
-.login-password-toggle:hover {
-  color: var(--color-gray-600);
-}
+.login-password-toggle:hover { color: var(--color-gray-600); }
 
-.login-icon {
-  width: 1rem;
-  height: 1rem;
-}
-
-.login-field-error {
-  margin-top: 0.2rem;
-  font-size: 0.7rem;
-  color: var(--color-error);
-}
+.login-icon { width: 1rem; height: 1rem; }
+.login-field-error { margin-top: 0.2rem; font-size: 0.7rem; color: var(--color-error); }
 
 .login-submit {
   display: flex;
@@ -453,25 +412,11 @@ body {
   background: var(--color-primary-dark);
   box-shadow: 0 4px 12px rgba(11,59,76,0.2);
 }
-.login-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+.login-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.login-spinner { width: 1rem; height: 1rem; animation: spin 1s linear infinite; }
+.login-info { margin-top: 0.75rem; font-size: 0.7rem; color: var(--color-gray-400); text-align: center; }
 
-.login-spinner {
-  width: 1rem;
-  height: 1rem;
-  animation: spin 1s linear infinite;
-}
-
-.login-info {
-  margin-top: 0.75rem;
-  font-size: 0.7rem;
-  color: var(--color-gray-400);
-  text-align: center;
-}
-
-/* ── Animaciones ── */
+/* ── 10. ANIMACIONES ── */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -480,14 +425,10 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.2s ease;
-}
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
+.animate-fade-in { animation: fadeIn 0.2s ease; }
+.animate-spin { animation: spin 1s linear infinite; }
 
-/* ── Utilidades adicionales ── */
+/* ── 11. UTILITIES & GRID SYSTEM ── */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-left { text-align: left; }
@@ -496,6 +437,7 @@ body {
 .flex-col { flex-direction: column; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+
 .gap-2 { gap: 0.5rem; }
 .gap-3 { gap: 0.75rem; }
 .gap-4 { gap: 1rem; }
@@ -517,23 +459,7 @@ body {
 .relative { position: relative; }
 .absolute { position: absolute; }
 
-/* ── Scroll suave ── */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Asegura que el contenido principal ocupe todo el ancho */
-main {
-  width: 100% !important;
-  box-sizing: border-box;
-}
-
-/* Para que los grids internos se expandan */
-.w-full {
-  width: 100%;
-}
-
-/* Ajuste para pantallas pequeñas */
+/* Responsive Media Queries */
 @media (max-width: 640px) {
   .grid-cols-2 {
     grid-template-columns: repeat(1, 1fr);

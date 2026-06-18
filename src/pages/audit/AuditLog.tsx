@@ -53,27 +53,55 @@ export default function AuditLog() {
   const actions = [...new Set(logs.map((l) => l.action))];
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Auditoría</h1>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Registro completo de acciones del sistema</p>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Auditoría</h1>
+        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Registro completo de acciones del sistema</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por tabla, acción o usuario..." className="input pl-9" />
+      {/* Filters */}
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0.75rem', width: '100%' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+          <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por tabla, acción o usuario..."
+            className="input"
+            style={{ paddingLeft: '2.25rem' }}
+          />
         </div>
-        <select value={filterAction} onChange={(e) => setFilterAction(e.target.value)} className="input sm:w-48">
+        <select
+          value={filterAction}
+          onChange={(e) => setFilterAction(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '160px' }}
+        >
           <option value="all">Todas las acciones</option>
           {actions.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="input sm:w-44" />
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="input sm:w-44" />
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '140px' }}
+        />
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '140px' }}
+        />
       </div>
 
+      {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-brand-600)' }} /></div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+        </div>
       ) : (
         <div className="table-container">
           <table className="table">
@@ -83,21 +111,21 @@ export default function AuditLog() {
                 <th>Acción</th>
                 <th>Tabla</th>
                 <th>Usuario</th>
-                <th className="text-right">Detalles</th>
+                <th style={{ textAlign: 'right' }}>Detalles</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
-                    <ClipboardList className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <ClipboardList style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin registros de auditoría
                   </td>
                 </tr>
               ) : (
                 filtered.map((log) => (
                   <tr key={log.id}>
-                    <td className="whitespace-nowrap text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', color: '#64748b' }}>
                       {new Date(log.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td>
@@ -105,12 +133,25 @@ export default function AuditLog() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="font-mono text-xs">{log.table_name}</td>
-                    <td className="text-sm" style={{ color: 'var(--text-secondary)' }}>{(log.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
-                    <td className="text-right">
+                    <td style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem' }}>{log.table_name}</td>
+                    <td style={{ color: '#64748b' }}>{(log.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                    <td style={{ textAlign: 'right' }}>
                       {(log.old_data || log.new_data) && (
-                        <button onClick={() => setSelectedLog(log)} className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--text-muted)' }}>
-                          <Eye className="w-4 h-4" />
+                        <button
+                          onClick={() => setSelectedLog(log)}
+                          style={{
+                            padding: '0.375rem',
+                            borderRadius: '0.5rem',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#94a3b8',
+                            cursor: 'pointer',
+                            transition: 'color 0.15s',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = '#0b3b4c'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                        >
+                          <Eye style={{ width: '1rem', height: '1rem' }} />
                         </button>
                       )}
                     </td>
@@ -122,31 +163,34 @@ export default function AuditLog() {
         </div>
       )}
 
+      {/* Detail Modal */}
       <Modal open={!!selectedLog} onClose={() => setSelectedLog(null)} title="Detalles de auditoría" size="xl">
         {selectedLog && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.875rem' }}>
               <div>
-                <p style={{ color: 'var(--text-secondary)' }}>Acción</p>
-                <span className={`badge ${ACTION_COLORS[selectedLog.action] ?? 'badge-neutral'}`}>{selectedLog.action}</span>
+                <p style={{ color: '#64748b' }}>Acción</p>
+                <span className={`badge ${ACTION_COLORS[selectedLog.action] ?? 'badge-neutral'}`}>
+                  {selectedLog.action}
+                </span>
               </div>
               <div>
-                <p style={{ color: 'var(--text-secondary)' }}>Tabla</p>
-                <p className="font-mono font-medium">{selectedLog.table_name}</p>
+                <p style={{ color: '#64748b' }}>Tabla</p>
+                <p style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 500 }}>{selectedLog.table_name}</p>
               </div>
             </div>
             {selectedLog.old_data && (
               <div>
-                <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Datos anteriores</p>
-                <pre className="text-xs rounded-lg p-3 overflow-auto max-h-48" style={{ backgroundColor: 'var(--bg-error-subtle)', border: '1px solid var(--border-error)', color: 'var(--color-error-600)' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 500, marginBottom: '0.5rem', color: '#64748b' }}>Datos anteriores</p>
+                <pre style={{ fontSize: '0.75rem', borderRadius: '0.5rem', padding: '0.75rem', overflow: 'auto', maxHeight: '12rem', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' }}>
                   {JSON.stringify(selectedLog.old_data, null, 2)}
                 </pre>
               </div>
             )}
             {selectedLog.new_data && (
               <div>
-                <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Datos nuevos</p>
-                <pre className="text-xs rounded-lg p-3 overflow-auto max-h-48" style={{ backgroundColor: 'var(--bg-success-subtle)', border: '1px solid var(--border-success)', color: 'var(--color-success-600)' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 500, marginBottom: '0.5rem', color: '#64748b' }}>Datos nuevos</p>
+                <pre style={{ fontSize: '0.75rem', borderRadius: '0.5rem', padding: '0.75rem', overflow: 'auto', maxHeight: '12rem', background: '#d1fae5', border: '1px solid #a7f3d0', color: '#065f46' }}>
                   {JSON.stringify(selectedLog.new_data, null, 2)}
                 </pre>
               </div>

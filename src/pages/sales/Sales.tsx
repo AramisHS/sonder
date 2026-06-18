@@ -63,27 +63,49 @@ export default function Sales() {
   const totalRevenue = filtered.reduce((s, sale) => s + sale.total, 0);
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Historial de ventas</h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {filtered.length} ventas · Total: <span className="font-semibold" style={{ color: 'var(--color-success-600)' }}>{fmt(totalRevenue)}</span>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Historial de ventas</h1>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>
+            {filtered.length} ventas · Total: <span style={{ fontWeight: 600, color: '#0b3b4c' }}>{fmt(totalRevenue)}</span>
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por número o vendedor..." className="input pl-9" />
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+          <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por número o vendedor..."
+            className="input"
+            style={{ paddingLeft: '2.25rem' }}
+          />
         </div>
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="input sm:w-44" title="Desde" />
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="input sm:w-44" title="Hasta" />
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '140px' }}
+          title="Desde"
+        />
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '140px' }}
+          title="Hasta"
+        />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-brand-600)' }} /></div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+        </div>
       ) : (
         <div className="table-container">
           <table className="table">
@@ -95,39 +117,48 @@ export default function Sales() {
                 <th>Pago</th>
                 <th>Descuento</th>
                 <th>Total</th>
-                <th className="text-right">Detalle</th>
+                <th style={{ textAlign: 'right' }}>Detalle</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
-                    <Receipt className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <Receipt style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin ventas registradas
                   </td>
                 </tr>
               ) : (
                 filtered.map((s) => (
                   <tr key={s.id}>
-                    <td className="font-mono text-xs font-medium">{s.sale_number}</td>
-                    <td className="whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 500 }}>{s.sale_number}</td>
+                    <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                       {new Date(s.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{(s.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                    <td style={{ color: '#64748b' }}>{(s.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
                     <td>
-                      <span className="badge-brand">
+                      <span className="badge badge-success">
                         {PAYMENT_LABELS[s.payment_method] ?? s.payment_method}
                       </span>
                     </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{s.discount > 0 ? fmt(s.discount) : '—'}</td>
-                    <td className="font-bold" style={{ color: 'var(--color-success-600)' }}>{fmt(s.total)}</td>
-                    <td className="text-right">
+                    <td style={{ color: '#64748b' }}>{s.discount > 0 ? fmt(s.discount) : '—'}</td>
+                    <td style={{ fontWeight: 700, color: '#0b3b4c' }}>{fmt(s.total)}</td>
+                    <td style={{ textAlign: 'right' }}>
                       <button
                         onClick={() => viewDetail(s)}
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: 'var(--text-muted)' }}
+                        style={{
+                          padding: '0.375rem',
+                          borderRadius: '0.5rem',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          transition: 'color 0.15s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#0b3b4c'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye style={{ width: '1rem', height: '1rem' }} />
                       </button>
                     </td>
                   </tr>
@@ -146,26 +177,28 @@ export default function Sales() {
         size="lg"
       >
         {detailLoading ? (
-          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-brand-600)' }} /></div>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+          </div>
         ) : detailSale ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.875rem' }}>
               <div>
-                <p style={{ color: 'var(--text-secondary)' }}>Fecha</p>
-                <p className="font-medium">{new Date(detailSale.created_at).toLocaleString('es-MX')}</p>
+                <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Fecha</p>
+                <p style={{ fontWeight: 500 }}>{new Date(detailSale.created_at).toLocaleString('es-MX')}</p>
               </div>
               <div>
-                <p style={{ color: 'var(--text-secondary)' }}>Vendedor</p>
-                <p className="font-medium">{(detailSale.profiles as { full_name: string } | null)?.full_name ?? '—'}</p>
+                <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Vendedor</p>
+                <p style={{ fontWeight: 500 }}>{(detailSale.profiles as { full_name: string } | null)?.full_name ?? '—'}</p>
               </div>
               <div>
-                <p style={{ color: 'var(--text-secondary)' }}>Método de pago</p>
-                <p className="font-medium">{PAYMENT_LABELS[detailSale.payment_method]}</p>
+                <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Método de pago</p>
+                <p style={{ fontWeight: 500 }}>{PAYMENT_LABELS[detailSale.payment_method]}</p>
               </div>
               {detailSale.notes && (
-                <div className="col-span-2">
-                  <p style={{ color: 'var(--text-secondary)' }}>Notas</p>
-                  <p className="font-medium">{detailSale.notes}</p>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Notas</p>
+                  <p style={{ fontWeight: 500 }}>{detailSale.notes}</p>
                 </div>
               )}
             </div>
@@ -183,30 +216,30 @@ export default function Sales() {
                 <tbody>
                   {detailSale.items.map((item) => (
                     <tr key={item.id}>
-                      <td className="font-medium">{(item.products as { name: string } | null)?.name ?? '—'}</td>
+                      <td style={{ fontWeight: 500 }}>{(item.products as { name: string } | null)?.name ?? '—'}</td>
                       <td>{item.quantity} {(item.products as { unit: string } | null)?.unit}</td>
                       <td>{fmt(item.unit_price)}</td>
-                      <td className="font-semibold">{fmt(item.subtotal)}</td>
+                      <td style={{ fontWeight: 600 }}>{fmt(item.subtotal)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <div className="flex flex-col gap-1.5 text-sm">
-              <div className="flex justify-between" style={{ color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', fontSize: '0.875rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                 <span>Subtotal</span>
                 <span>{fmt(detailSale.items.reduce((s, i) => s + i.subtotal, 0))}</span>
               </div>
               {detailSale.discount > 0 && (
-                <div className="flex justify-between" style={{ color: 'var(--text-secondary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                   <span>Descuento</span>
-                  <span style={{ color: 'var(--color-error-500)' }}>-{fmt(detailSale.discount)}</span>
+                  <span style={{ color: '#dc2626' }}>-{fmt(detailSale.discount)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-base border-t pt-1.5" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-default)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', color: '#1e293b' }}>
                 <span>Total</span>
-                <span style={{ color: 'var(--color-success-600)' }}>{fmt(detailSale.total)}</span>
+                <span style={{ color: '#0b3b4c' }}>{fmt(detailSale.total)}</span>
               </div>
             </div>
           </div>

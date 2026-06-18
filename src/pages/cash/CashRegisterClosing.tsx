@@ -104,21 +104,21 @@ export default function CashRegisterClosing() {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
       <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Corte de Caja</h1>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Cierra la caja diaria y consulta cortes anteriores</p>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Corte de Caja</h1>
+        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Cierra la caja diaria y consulta cortes anteriores</p>
       </div>
 
       {/* New closing form */}
-      <div className="card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Calculator className="w-5 h-5" style={{ color: 'var(--color-brand-600)' }} />
-          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Realizar corte</h2>
+      <div style={{ padding: '1.25rem', border: '1px solid #edf2f7', borderRadius: '1rem', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+          <Calculator style={{ width: '1.25rem', height: '1.25rem', color: '#0b3b4c' }} />
+          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }}>Realizar corte</h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             <label className="label">Fecha del corte</label>
             <input
               type="date"
@@ -127,7 +127,7 @@ export default function CashRegisterClosing() {
               className="input"
             />
           </div>
-          <div className="flex-1">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             <label className="label">Notas (opcional)</label>
             <input
               value={notes}
@@ -136,19 +136,34 @@ export default function CashRegisterClosing() {
               className="input"
             />
           </div>
-          <div className="flex items-end">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
             {alreadyClosed ? (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm" style={{ background: 'var(--color-warning-50)', color: 'var(--color-warning-700)' }}>
-                <AlertCircle className="w-4 h-4" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: '#fef3c7', color: '#92400e', fontSize: '0.875rem' }}>
+                <AlertCircle style={{ width: '1rem', height: '1rem' }} />
                 Ya existe un corte para esta fecha
               </div>
             ) : (
               <button
                 onClick={handleClosing}
-                disabled={saving}
-                className="btn btn-primary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  background: '#0b3b4c',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
+                // disabled controlled once
               >
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
                 Realizar corte
               </button>
             )}
@@ -158,8 +173,8 @@ export default function CashRegisterClosing() {
 
       {/* History */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-brand-600)' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
         </div>
       ) : (
         <div className="table-container">
@@ -173,35 +188,44 @@ export default function CashRegisterClosing() {
                 <th>Tarjeta</th>
                 <th>No. Ventas</th>
                 <th>Responsable</th>
-                <th className="text-right">PDF</th>
+                <th style={{ textAlign: 'right' }}>PDF</th>
               </tr>
             </thead>
             <tbody>
               {closings.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
-                    <Calculator className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <Calculator style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin cortes de caja registrados
                   </td>
                 </tr>
               ) : (
                 closings.map((c) => (
                   <tr key={c.id}>
-                    <td className="font-medium">{new Date(c.closing_date + 'T12:00:00').toLocaleDateString('es-MX')}</td>
-                    <td className="font-semibold" style={{ color: 'var(--color-success-600)' }}>{fmt(c.total_sales)}</td>
+                    <td style={{ fontWeight: 500 }}>{new Date(c.closing_date + 'T12:00:00').toLocaleDateString('es-MX')}</td>
+                    <td style={{ fontWeight: 600, color: '#059669' }}>{fmt(c.total_sales)}</td>
                     <td>{fmt(c.cash_total)}</td>
                     <td>{fmt(c.transfer_total)}</td>
                     <td>{fmt(c.card_total)}</td>
                     <td>{c.sales_count}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{(c.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
-                    <td className="text-right">
+                    <td style={{ color: '#64748b' }}>{(c.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                    <td style={{ textAlign: 'right' }}>
                       <button
                         onClick={() => handlePDF(c)}
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: 'var(--text-muted)' }}
+                        style={{
+                          padding: '0.375rem',
+                          borderRadius: '0.5rem',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          transition: 'color 0.15s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#0b3b4c'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
                         title="Descargar PDF"
                       >
-                        <FileText className="w-4 h-4" />
+                        <FileText style={{ width: '1rem', height: '1rem' }} />
                       </button>
                     </td>
                   </tr>

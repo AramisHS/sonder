@@ -93,24 +93,50 @@ export default function InventoryEntries() {
   );
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Entradas de inventario</h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Registro de mercancía recibida</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Entradas de inventario</h1>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Registro de mercancía recibida</p>
         </div>
-        <button onClick={() => { reset({ purchase_price: 0, quantity: 1 }); setModalOpen(true); }} className="btn-primary">
-          <Plus className="w-4 h-4" /> Nueva entrada
+        <button
+          onClick={() => { reset({ purchase_price: 0, quantity: 1 }); setModalOpen(true); }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.5rem',
+            background: '#0b3b4c',
+            color: '#ffffff',
+            border: 'none',
+            fontWeight: 500,
+            fontSize: '0.875rem',
+            cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
+          onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
+        >
+          <Plus style={{ width: '1rem', height: '1rem' }} /> Nueva entrada
         </button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por producto..." className="input pl-9" />
+      <div style={{ position: 'relative', width: '100%' }}>
+        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por producto..."
+          className="input"
+          style={{ paddingLeft: '2.25rem' }}
+        />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-brand-600)' }} /></div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+        </div>
       ) : (
         <div className="table-container">
           <table className="table">
@@ -128,23 +154,23 @@ export default function InventoryEntries() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
-                    <PackagePlus className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <PackagePlus style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin entradas registradas
                   </td>
                 </tr>
               ) : (
                 filtered.map((e) => (
                   <tr key={e.id}>
-                    <td className="whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+                    <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                       {new Date(e.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="font-medium">{(e.products as { name: string } | null)?.name ?? '—'}</td>
-                    <td className="font-semibold" style={{ color: 'var(--color-brand-600)' }}>+{e.quantity} {(e.products as { unit: string } | null)?.unit}</td>
+                    <td style={{ fontWeight: 500 }}>{(e.products as { name: string } | null)?.name ?? '—'}</td>
+                    <td style={{ fontWeight: 600, color: '#0b3b4c' }}>+{e.quantity} {(e.products as { unit: string } | null)?.unit}</td>
                     <td>{e.purchase_price ? fmt(e.purchase_price) : '—'}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{(e.suppliers as { name: string } | null)?.name ?? '—'}</td>
-                    <td className="max-w-xs truncate" style={{ color: 'var(--text-secondary)' }}>{e.notes ?? '—'}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{(e.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                    <td style={{ color: '#64748b' }}>{(e.suppliers as { name: string } | null)?.name ?? '—'}</td>
+                    <td style={{ maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>{e.notes ?? '—'}</td>
+                    <td style={{ color: '#64748b' }}>{(e.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
                   </tr>
                 ))
               )}
@@ -154,7 +180,7 @@ export default function InventoryEntries() {
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nueva entrada de inventario" size="lg">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label className="label">Producto *</label>
             <select {...register('product_id')} className="input">
@@ -163,22 +189,22 @@ export default function InventoryEntries() {
                 <option key={p.id} value={p.id}>{p.name} (stock: {p.stock} {p.unit})</option>
               ))}
             </select>
-            {errors.product_id && <p className="mt-1 text-xs" style={{ color: 'var(--color-error-500)' }}>{errors.product_id.message}</p>}
+            {errors.product_id && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{errors.product_id.message}</p>}
           </div>
 
           {selectedProduct && (
-            <div className="callout-info px-3 py-2 rounded-lg border">
-              <p className="text-xs font-medium">
-                Stock actual: <span className="font-bold">{selectedProduct.stock} {selectedProduct.unit}</span>
+            <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', fontSize: '0.875rem' }}>
+              <p style={{ margin: 0, fontWeight: 500 }}>
+                Stock actual: <span style={{ fontWeight: 700 }}>{selectedProduct.stock} {selectedProduct.unit}</span>
               </p>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label className="label">Cantidad *</label>
               <input {...register('quantity')} type="number" step="0.01" min="0.01" className="input" />
-              {errors.quantity && <p className="mt-1 text-xs" style={{ color: 'var(--color-error-500)' }}>{errors.quantity.message}</p>}
+              {errors.quantity && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{errors.quantity.message}</p>}
             </div>
             <div>
               <label className="label">Precio de compra</label>
@@ -196,13 +222,53 @@ export default function InventoryEntries() {
 
           <div>
             <label className="label">Notas</label>
-            <textarea {...register('notes')} className="input resize-none h-16" placeholder="Observaciones opcionales..." />
+            <textarea {...register('notes')} className="input" style={{ resize: 'vertical', minHeight: '4rem' }} placeholder="Observaciones opcionales..." />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary flex-1">Cancelar</button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+          <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              style={{
+                flex: 1,
+                padding: '0.5rem 0',
+                borderRadius: '0.5rem',
+                background: '#f1f5f9',
+                color: '#334155',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                flex: 1,
+                padding: '0.5rem 0',
+                borderRadius: '0.5rem',
+                background: '#0b3b4c',
+                color: '#ffffff',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
+            >
+              {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
               Registrar entrada
             </button>
           </div>
