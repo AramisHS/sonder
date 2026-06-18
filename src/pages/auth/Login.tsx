@@ -5,6 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import LightRays from '../../components/LightRays';
+// 🔥 Importamos el store del tema para validar el estado actual
+import { useThemeStore } from '../../store/themeStore';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -24,6 +27,7 @@ type RegisterData = z.infer<typeof registerSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const { dark } = useThemeStore(); // 🔥 Obtenemos si está en modo oscuro (true/false)
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
@@ -57,10 +61,60 @@ export default function Login() {
     navigate('/dashboard');
   };
 
+  // 🎨 Condicional exacto con tus colores solicitados:
+  // Si está en modo oscuro -> Blanco (#ffffff) 
+  // Si no -> Azul Profundo (#0B2533)
+  const raysColor = dark ? '#ffffff' : '#0B2533';
+
   return (
-    <div className="login-page">
-      <div className="login-box">
-        {/* Logo grande, sin fondo, con sombra y borde blanco */}
+    <div
+      className="login-page"
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        minHeight: '100vh',
+      }}
+    >
+      {/* Contenedor de los Rayos */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          pointerEvents: 'none',
+          opacity: 0.4, // 🔥 Opacidad fija al máximo para ambos modos sin reducciones
+          transition: 'opacity 0.3s ease',
+        }}
+      >
+        <LightRays
+          raysOrigin="top-center"
+          raysColor={raysColor}
+          raysSpeed={1.0}
+          lightSpread={0.5}
+          rayLength={3.0}
+          pulsating={false}
+          fadeDistance={1.0}
+          saturation={1.0}
+          followMouse={true}
+          mouseInfluence={0.1}
+          noiseAmount={0.0}
+          distortion={0.0}
+        />
+      </div>
+
+      <div
+        className="login-box animate-fade-in"
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: '440px',
+        }}
+      >
+        {/* Logo */}
         <div className="login-logo-wrapper">
           <img
             src="/images/sonder-logo.png"
@@ -71,14 +125,17 @@ export default function Login() {
 
         <p className="login-subtitle">Todo tu negocio en movimiento</p>
 
+        {/* Tabs */}
         <div className="login-tabs">
           <button
+            type="button"
             onClick={() => { setMode('login'); setError(''); }}
             className={`login-tab ${mode === 'login' ? 'login-tab-active' : ''}`}
           >
             Iniciar sesión
           </button>
           <button
+            type="button"
             onClick={() => { setMode('register'); setError(''); }}
             className={`login-tab ${mode === 'register' ? 'login-tab-active' : ''}`}
           >
@@ -102,6 +159,7 @@ export default function Login() {
                 <p className="login-field-error">{loginForm.formState.errors.email.message}</p>
               )}
             </div>
+
             <div className="login-field">
               <label className="login-label">Contraseña</label>
               <div className="login-password-wrapper">
@@ -123,6 +181,7 @@ export default function Login() {
                 <p className="login-field-error">{loginForm.formState.errors.password.message}</p>
               )}
             </div>
+
             <button type="submit" disabled={loading} className="login-submit">
               {loading && <Loader2 className="login-spinner" />}
               Entrar
@@ -141,6 +200,7 @@ export default function Login() {
                 <p className="login-field-error">{registerForm.formState.errors.full_name.message}</p>
               )}
             </div>
+
             <div className="login-field">
               <label className="login-label">Correo electrónico</label>
               <input
@@ -153,6 +213,7 @@ export default function Login() {
                 <p className="login-field-error">{registerForm.formState.errors.email.message}</p>
               )}
             </div>
+
             <div className="login-field">
               <label className="login-label">Contraseña</label>
               <div className="login-password-wrapper">
@@ -174,6 +235,7 @@ export default function Login() {
                 <p className="login-field-error">{registerForm.formState.errors.password.message}</p>
               )}
             </div>
+
             <div className="login-field">
               <label className="login-label">Confirmar contraseña</label>
               <input
@@ -186,6 +248,7 @@ export default function Login() {
                 <p className="login-field-error">{registerForm.formState.errors.confirmPassword.message}</p>
               )}
             </div>
+
             <button type="submit" disabled={loading} className="login-submit">
               {loading && <Loader2 className="login-spinner" />}
               Crear cuenta

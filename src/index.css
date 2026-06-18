@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
-/* ── 1. VARIABLES (Diseño Atómico) ── */
+/* ==========================================================================
+   1. VARIABLES (Diseño Atómico) - Modo Claro por Defecto
+   ========================================================================== */
 :root {
   /* Colores base */
   --color-primary: #0b3b4c;
@@ -9,9 +11,25 @@
   --color-secondary: #b8860b;
   --color-secondary-light: #d4a04a;
 
-  /* Neutros */
+  /* Neutros Dinámicos */
   --color-bg: #f3f4f6;
   --color-white: #ffffff;
+  --color-card-bg: #ffffff;
+  --color-card-border: #e2e8f0;
+  --color-table-header: #f8fafc;
+  --color-table-hover: #f1f5f9;
+
+  /* Colores dinámicos específicos para Sidebar */
+  --color-sidebar-bg: #0b3b4c;
+  --color-sidebar-text: rgba(255, 255, 255, 0.7);
+  --color-sidebar-text-hover: #ffffff;
+  --color-sidebar-text-active: #ffffff;
+  --color-sidebar-title: rgba(255, 255, 255, 0.4);
+  --color-sidebar-border: rgba(255, 255, 255, 0.1);
+  --color-sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --color-sidebar-active-bg: rgba(255, 255, 255, 0.15);
+
+  /* Escala de Grises */
   --color-gray-50: #f8fafc;
   --color-gray-100: #f1f5f9;
   --color-gray-200: #e2e8f0;
@@ -38,9 +56,9 @@
   --color-info-text: #0369a1;
 
   /* Sombras */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
 
   /* Bordes */
   --radius-sm: 0.375rem;
@@ -54,7 +72,59 @@
   --font-serif: 'Playfair Display', Georgia, serif;
 }
 
-/* ── 2. BASE & RESET ── */
+/* 🌎 MODO OSCURO PREMIUM (Gris Obsidiana / Azul Nórdico) */
+body.dark-mode, [data-theme="dark"] {
+  --color-bg: #0f1115;          /* Fondo general obsidian oscuro */
+  --color-card-bg: #161920;     /* Fondo de tarjetas y contenedor de tablas */
+  --color-card-border: #232834; /* Bordes sutiles sofisticados */
+  --color-table-header: #1a1e26;/* Encabezado de tablas corregido (image_9f80df.png) */
+  --color-table-hover: #1e232d; /* Hover de filas */
+  --color-white: #161920;       /* Mapea contenedores a tono oscuro */
+
+  /* 🔥 Arreglo del Sidebar en Modo Oscuro (Evita el contraste invisible de image_9f83c7.png) */
+  --color-sidebar-bg: #12141a; 
+  --color-sidebar-text: #90a1c1;
+  --color-sidebar-text-hover: #ffffff;
+  --color-sidebar-text-active: #ffffff;
+  --color-sidebar-title: #62728f;
+  --color-sidebar-border: #232834;
+  --color-sidebar-hover-bg: #1e232d;
+  --color-sidebar-active-bg: #1d5c74;
+  
+  /* Ajuste de escala de grises para textos limpios y legibles */
+  --color-gray-50: #1a1e26;     
+  --color-gray-100: #232834;    
+  --color-gray-200: #2e3545;    
+  --color-gray-300: #424b5e;
+  --color-gray-400: #62728f;
+  --color-gray-500: #90a1c1;    
+  --color-gray-700: #e2e8f0;    
+  --color-gray-800: #f8fafc;    /* Textos principales en blanco sutil */
+  --color-gray-900: #ffffff;
+
+  /* Estados Adaptados */
+  --color-success-bg: rgba(5, 150, 105, 0.15);
+  --color-success-text: #34d399;
+  --color-warning-bg: rgba(217, 119, 6, 0.15);
+  --color-warning-text: #fbbf24;
+  --color-error-bg: rgba(220, 38, 38, 0.15);
+  --color-error-text: #fca5a5;
+  --color-info-bg: rgba(2, 132, 199, 0.15);
+  --color-info-text: #7dd3fc;
+
+  /* Sombras oscuras */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+  
+  /* Botón primario en modo oscuro */
+  --color-primary: #1d5c74;
+  --color-primary-dark: #277592;
+}
+
+/* ==========================================================================
+   2. BASE & RESET
+   ========================================================================== */
 * {
   margin: 0;
   padding: 0;
@@ -71,6 +141,7 @@ body {
   font-family: var(--font-sans);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 main {
@@ -78,41 +149,54 @@ main {
   box-sizing: border-box;
 }
 
-/* ── 3. SCROLLBAR ── */
-::-webkit-scrollbar { 
-  width: 6px; 
-  height: 6px; 
-}
-::-webkit-scrollbar-track { 
-  background: transparent; 
-}
-::-webkit-scrollbar-thumb { 
-  background: var(--color-gray-300); 
-  border-radius: 9999px; 
-}
-::-webkit-scrollbar-thumb:hover { 
-  background: var(--color-gray-400); 
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* ── 4. LAYOUT & COMPONENTES BASE ── */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+/* ==========================================================================
+   3. LAYOUT & COMPONENTES BASE
+   ========================================================================== */
 .container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1rem;
 }
 
-.card {
-  background: var(--color-white);
+/* Asegura que todos los Cards (Dashboard e información) muten de color (image_9f8107.png) */
+.card, 
+.dashboard-card, 
+.chart-card,
+.products-top-card {
+  background: var(--color-card-bg) !important;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-gray-200);
+  border: 1px solid var(--color-card-border);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s, transform 0.2s;
+  color: var(--color-gray-800);
+  transition: box-shadow 0.2s, background 0.25s ease, border-color 0.25s ease;
 }
+
 .card:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* ── 5. BOTONES ── */
+/* ==========================================================================
+   4. BOTONES
+   ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -127,27 +211,60 @@ main {
   text-decoration: none;
   white-space: nowrap;
 }
+
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.btn-primary { background: var(--color-primary); color: var(--color-white); }
-.btn-primary:hover:not(:disabled) { background: var(--color-primary-dark); }
+.btn-primary {
+  background: var(--color-primary);
+  color: #ffffff;
+}
 
-.btn-secondary { background: var(--color-gray-100); color: var(--color-gray-700); }
-.btn-secondary:hover:not(:disabled) { background: var(--color-gray-200); }
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
 
-.btn-success { background: var(--color-success); color: var(--color-white); }
-.btn-success:hover:not(:disabled) { background: #047857; }
+.btn-secondary {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
 
-.btn-danger { background: var(--color-error); color: var(--color-white); }
-.btn-danger:hover:not(:disabled) { background: #b91c1c; }
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-gray-200);
+}
 
-.btn-ghost { background: transparent; color: var(--color-gray-500); }
-.btn-ghost:hover:not(:disabled) { background: var(--color-gray-100); }
+.btn-success {
+  background: var(--color-success);
+  color: #ffffff;
+}
 
-/* ── 6. FORMULARIOS (Inputs & Labels) ── */
+.btn-success:hover:not(:disabled) {
+  background: #047857;
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: #ffffff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-gray-500);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-gray-100);
+}
+
+/* ==========================================================================
+   5. FORMULARIOS (Inputs & Labels)
+   ========================================================================== */
 .input {
   width: 100%;
   padding: 0.5rem 0.75rem;
@@ -158,19 +275,28 @@ main {
   font-size: 0.875rem;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.25s ease, color 0.25s ease;
   font-family: var(--font-sans);
 }
+
 .input::placeholder {
   color: var(--color-gray-400);
 }
+
 .input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(11, 59, 76, 0.12);
 }
 
-.input-sm { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
-.input-lg { padding: 0.75rem 1rem; font-size: 1rem; }
+.input-sm {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.input-lg {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
 
 .label {
   display: block;
@@ -180,12 +306,15 @@ main {
   margin-bottom: 0.25rem;
 }
 
-/* ── 7. TABLAS ── */
+/* ==========================================================================
+   6. TABLAS (Corregida con variables dinámicas para image_9f80df.png)
+   ========================================================================== */
 .table-container {
   overflow-x: auto;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-gray-200);
-  background: var(--color-white);
+  border: 1px solid var(--color-card-border);
+  background: var(--color-card-bg);
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 .table {
@@ -193,34 +322,58 @@ main {
   text-align: left;
   font-size: 0.875rem;
   border-collapse: collapse;
+  background: transparent;
 }
 
 .table th {
   padding: 0.75rem 1rem;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-gray-500);
-  background: var(--color-gray-50);
-  border-bottom: 1px solid var(--color-gray-200);
+  background: var(--color-table-header) !important; /* Muta dinámicamente con el tema */
+  border-bottom: 1px solid var(--color-card-border);
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
 .table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-gray-200);
+  border-bottom: 1px solid var(--color-card-border);
   color: var(--color-gray-800);
+  background: transparent;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.table tbody tr {
+  background: var(--color-card-bg);
+  transition: background 0.2s ease;
 }
 
 .table tbody tr:hover {
-  background: var(--color-gray-50);
+  background: var(--color-table-hover);
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* ── 8. BADGES ── */
+/* ==========================================================================
+   6b. BANNER INFORMATIVO / ALERTAS (Corregido para image_9f83c7.png)
+   ========================================================================== */
+.info-banner, 
+.alert-info-box,
+main .card:has(p) { 
+  /* Aplica directamente al contenedor de notas informativas */
+  background: var(--color-info-bg) !important;
+  color: var(--color-info-text) !important;
+  border: 1px solid var(--color-card-border);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* ==========================================================================
+   7. BADGES
+   ========================================================================== */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -229,16 +382,38 @@ main {
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
-.badge-brand   { background: var(--color-warning-bg); color: var(--color-warning-text); }
-.badge-warning { background: var(--color-warning-bg); color: var(--color-warning-text); }
-.badge-success { background: var(--color-success-bg); color: var(--color-success-text); }
-.badge-error   { background: var(--color-error-bg); color: var(--color-error-text); }
-.badge-info    { background: var(--color-info-bg); color: var(--color-info-text); }
-.badge-neutral { background: var(--color-gray-100); color: var(--color-gray-600); }
+.badge-brand,
+.badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
 
-/* ── 9. LOGIN PAGE VISTA ── */
+.badge-success {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.badge-error {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+.badge-info {
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+}
+
+.badge-neutral {
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+/* ==========================================================================
+   8. VISTA LOGIN
+   ========================================================================== */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -246,19 +421,21 @@ main {
   justify-content: center;
   background: var(--color-bg);
   padding: 1.5rem;
+  transition: background 0.25s ease;
 }
 
 .login-box {
   width: 100%;
   max-width: 440px;
-  background: var(--color-white);
+  background: var(--color-card-bg);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-lg);
   padding: 2.5rem 2rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid var(--color-gray-200);
+  border: 1px solid var(--color-card-border);
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 .login-logo {
@@ -266,7 +443,11 @@ main {
   height: 300px;
   object-fit: contain;
   margin-bottom: 0.5rem;
-  filter: drop-shadow(0 4px 12px rgba(11,59,76,0.1));
+  filter: drop-shadow(0 4px 12px rgba(11, 59, 76, 0.1));
+}
+
+body.dark-mode .login-logo {
+  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.05)) invert(0.9);
 }
 
 .login-title {
@@ -290,6 +471,7 @@ main {
   padding: 0.25rem;
   margin-bottom: 1.5rem;
   width: 100%;
+  transition: background 0.25s ease;
 }
 
 .login-tab {
@@ -305,11 +487,13 @@ main {
   transition: all 0.2s;
   text-align: center;
 }
+
 .login-tab:hover:not(.login-tab-active) {
   color: var(--color-gray-800);
 }
+
 .login-tab-active {
-  background: var(--color-white);
+  background: var(--color-card-bg);
   color: var(--color-primary);
   box-shadow: var(--shadow-sm);
   font-weight: 600;
@@ -325,6 +509,10 @@ main {
   color: var(--color-error-text);
   font-size: 0.875rem;
   text-align: center;
+}
+
+body.dark-mode .login-error {
+  border-color: rgba(220, 38, 38, 0.3);
 }
 
 .login-form {
@@ -356,10 +544,14 @@ main {
   color: var(--color-gray-800);
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.25s ease;
   box-sizing: border-box;
 }
-.login-input::placeholder { color: var(--color-gray-400); }
+
+.login-input::placeholder {
+  color: var(--color-gray-400);
+}
+
 .login-input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(11, 59, 76, 0.12);
@@ -369,9 +561,11 @@ main {
   position: relative;
   width: 100%;
 }
+
 .login-password-wrapper .login-input {
   padding-right: 2.5rem;
 }
+
 .login-password-toggle {
   position: absolute;
   right: 0.75rem;
@@ -386,10 +580,21 @@ main {
   align-items: center;
   justify-content: center;
 }
-.login-password-toggle:hover { color: var(--color-gray-600); }
 
-.login-icon { width: 1rem; height: 1rem; }
-.login-field-error { margin-top: 0.2rem; font-size: 0.7rem; color: var(--color-error); }
+.login-password-toggle:hover {
+  color: var(--color-gray-600);
+}
+
+.login-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.login-field-error {
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  color: var(--color-error);
+}
 
 .login-submit {
   display: flex;
@@ -399,7 +604,7 @@ main {
   width: 100%;
   padding: 0.75rem 0;
   background: var(--color-primary);
-  color: var(--color-white);
+  color: #ffffff;
   font-size: 0.95rem;
   font-weight: 500;
   border: none;
@@ -408,60 +613,365 @@ main {
   transition: background 0.15s, box-shadow 0.15s;
   margin-top: 0.25rem;
 }
+
 .login-submit:hover:not(:disabled) {
   background: var(--color-primary-dark);
-  box-shadow: 0 4px 12px rgba(11,59,76,0.2);
+  box-shadow: 0 4px 12px rgba(11, 59, 76, 0.2);
 }
-.login-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-.login-spinner { width: 1rem; height: 1rem; animation: spin 1s linear infinite; }
-.login-info { margin-top: 0.75rem; font-size: 0.7rem; color: var(--color-gray-400); text-align: center; }
 
-/* ── 10. ANIMACIONES ── */
+.login-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-info {
+  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--color-gray-400);
+  text-align: center;
+}
+
+/* ==========================================================================
+   9. COMPONENTE: SIDEBAR & TOOLTIPS (Variables Dinámicas Aplicadas Completamente)
+   ========================================================================== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 240px;
+  background: var(--color-sidebar-bg) !important; /* Usa la variable de entorno */
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease, background 0.25s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-open {
+  transform: translateX(0);
+}
+
+/* Overlay móvil */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 39;
+  display: none;
+}
+
+/* Encabezado */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-sidebar-border);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+body.dark-mode .sidebar-logo {
+  filter: invert(0.9);
+}
+
+.sidebar-brand-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sidebar-close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.sidebar-close-btn:hover {
+  background: var(--color-sidebar-hover-bg);
+  color: #fff;
+}
+
+/* Navegación */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem;
+}
+
+.sidebar-group {
+  margin-bottom: 1.25rem;
+}
+
+.sidebar-group-title {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-sidebar-title);
+  padding-left: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-group-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--color-sidebar-text);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-link:hover {
+  background: var(--color-sidebar-hover-bg);
+  color: var(--color-sidebar-text-hover);
+}
+
+.sidebar-link-active {
+  background: var(--color-sidebar-active-bg) !important;
+  color: var(--color-sidebar-text-active);
+  font-weight: 500;
+}
+
+.sidebar-link-icon {
+  flex-shrink: 0;
+}
+
+.sidebar-link-label {
+  flex: 1;
+}
+
+/* Estructura Base de Tooltips */
+.sidebar-nav-link,
+.sidebar-footer {
+  position: relative;
+}
+
+.sidebar-nav-link .sidebar-tooltip,
+.sidebar-footer .sidebar-tooltip {
+  position: absolute;
+  left: calc(100% + 8px);
+  background-color: #1e293b;
+  color: #ffffff;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 50;
+}
+
+body.dark-mode .sidebar-nav-link .sidebar-tooltip,
+body.dark-mode .sidebar-footer .sidebar-tooltip {
+  background-color: var(--color-gray-200);
+  color: var(--color-gray-800);
+}
+
+/* Ajustes posicionales específicos */
+.sidebar-nav-link .sidebar-tooltip {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.sidebar-footer .sidebar-tooltip {
+  bottom: 1.5rem;
+}
+
+/* Desencadenadores de Hover */
+.sidebar-nav-link:hover .sidebar-tooltip,
+.sidebar-footer:hover .sidebar-tooltip {
+  opacity: 1;
+}
+
+/* Pie de página */
+.sidebar-footer {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--color-sidebar-border);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dark-mode .sidebar-user-name {
+  color: var(--color-gray-900);
+}
+
+.sidebar-user-role {
+  font-size: 0.65rem;
+  color: var(--color-sidebar-title);
+  margin: 0;
+  text-transform: capitalize;
+}
+
+/* ==========================================================================
+   10. ANIMACIONES
+   ========================================================================== */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-fade-in { animation: fadeIn 0.2s ease; }
-.animate-spin { animation: spin 1s linear infinite; }
+.animate-fade-in {
+  animation: fadeIn 0.2s ease;
+}
 
-/* ── 11. UTILITIES & GRID SYSTEM ── */
+.animate-spin,
+.login-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   11. UTILITIES & GRID SYSTEM
+   ========================================================================== */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-left { text-align: left; }
-
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
-
 .gap-2 { gap: 0.5rem; }
 .gap-3 { gap: 0.75rem; }
 .gap-4 { gap: 1rem; }
 .gap-5 { gap: 1.25rem; }
 .gap-6 { gap: 1.5rem; }
-
 .mt-2 { margin-top: 0.5rem; }
 .mt-4 { margin-top: 1rem; }
 .mb-2 { margin-bottom: 0.5rem; }
 .mb-4 { margin-bottom: 1rem; }
-
 .w-full { width: 100%; }
 .max-w-sm { max-width: 24rem; }
 .max-w-md { max-width: 28rem; }
 .max-w-lg { max-width: 32rem; }
 .max-w-xl { max-width: 36rem; }
 .max-w-2xl { max-width: 42rem; }
-
 .relative { position: relative; }
 .absolute { position: absolute; }
 
-/* Responsive Media Queries */
+/* ==========================================================================
+   12. MEDIA QUERIES (Responsivo)
+   ========================================================================== */
 @media (max-width: 640px) {
   .grid-cols-2 {
     grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+@media (max-width: 1023px) {
+  .sidebar {
+    width: 260px;
+    transform: translateX(-100%);
+  }
+  .sidebar-open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    display: block !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    position: static;
+    transform: translateX(0) !important;
+    width: 240px;
+    height: 100vh;
+    border-radius: 0;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  body.dark-mode .sidebar {
+    background: var(--color-sidebar-bg) !important;
+    border-right: 1px solid var(--color-card-border);
+    box-shadow: none;
+  }
+
+  .sidebar-overlay,
+  .sidebar-close-btn {
+    display: none !important;
   }
 }

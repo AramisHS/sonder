@@ -5,19 +5,19 @@ import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
 import Layout from './components/Layout';
 import Login from './pages/auth/Login';
-import Dashboard from './pages/dashboard/Dashboard';
-import Products from './pages/products/Products';
-import Categories from './pages/categories/Categories';
-import Suppliers from './pages/suppliers/Suppliers';
+import Dashboard from './pages/home/Dashboard';
+import Products from './pages/catalog/Products';
+import Categories from './pages/catalog/Categories';
+import Suppliers from './pages/catalog/Suppliers';
 import InventoryEntries from './pages/inventory/InventoryEntries';
 import InventoryAdjustments from './pages/inventory/InventoryAdjustments';
 import NewSale from './pages/sales/NewSale';
 import Sales from './pages/sales/Sales';
-import CashRegisterClosing from './pages/cash/CashRegisterClosing';
-import Movements from './pages/movements/Movements';
-import Reports from './pages/reports/Reports';
-import AuditLog from './pages/audit/AuditLog';
-import Users from './pages/users/Users';
+import CashRegisterClosing from './pages/sales/CashRegisterClosing';
+import Movements from './pages/inventory/Movements';
+import Reports from './pages/administration/Reports';
+import AuditLog from './pages/administration/AuditLog';
+import Users from './pages/administration/Users';
 import { Loader2 } from 'lucide-react';
 
 function ProtectedRoute() {

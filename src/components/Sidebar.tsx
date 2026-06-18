@@ -1,14 +1,18 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Tag, Truck, PackagePlus, Sliders,
   ShoppingCart, Receipt, BarChart3, ClipboardList, Users,
-  ArrowLeftRight, X, Zap, Calculator,
+  ArrowLeftRight, Calculator,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  isMobile: boolean;
 }
 
 interface NavItem {
@@ -26,9 +30,7 @@ interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     title: 'Principal',
-    items: [
-      { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-    ],
+    items: [{ label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard }],
   },
   {
     title: 'Catálogo',
@@ -64,162 +66,196 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-export default function Sidebar({ open, onClose }: SidebarProps) {
+const getSectionName = (path: string): string => {
+  for (const group of navGroups) {
+    for (const item of group.items) {
+      if (item.to === path) return group.title;
+    }
+  }
+  return '';
+};
+
+export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, isMobile }: SidebarProps) {
   const { profile } = useAuthStore();
   const isAdmin = profile?.role === 'admin';
-  const navigate = useNavigate();
+  const [isHovered, setIsHovered] = useState(false);
+  const location = useLocation();
 
-  // Estilos inline para el sidebar
-  const sidebarStyle = {
-    position: 'fixed' as const,
+  const showFull = !isCollapsed || isHovered;
+  const activeSection = getSectionName(location.pathname);
+  const isDesktop = !isMobile;
+
+  const baseStyles: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#ffffff',
+    borderRight: '1px solid #e2e8f0',
+    boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
+    overflow: 'hidden',
+    flexShrink: 0,
+    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    willChange: 'width',
+  };
+
+  const width = isDesktop
+    ? (isCollapsed && !isHovered ? '64px' : '240px')
+    : '240px';
+
+  const desktopStyles: React.CSSProperties = {
+    ...baseStyles,
+    position: 'sticky',
+    top: 0,
+    height: '100vh',
+    width,
+  };
+
+  const mobileStyles: React.CSSProperties = {
+    ...baseStyles,
+    position: 'fixed',
     top: 0,
     left: 0,
     height: '100%',
-    width: '16rem',
     zIndex: 30,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    background: '#ffffff',
-    borderRight: '1px solid #edf2f7',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
     transform: open ? 'translateX(0)' : 'translateX(-100%)',
-    transition: 'transform 0.3s ease',
+    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    width,
   };
 
-  // Estilos para el overlay en móvil
-  const overlayStyle = {
-    position: 'fixed' as const,
-    inset: 0,
-    background: 'rgba(0,0,0,0.3)',
-    zIndex: 20,
-    display: open ? 'block' : 'none',
-  };
+  const styles = isMobile ? mobileStyles : desktopStyles;
 
   return (
     <>
-      {/* Overlay para móvil */}
-      {open && <div style={overlayStyle} onClick={onClose} />}
-
-      <aside style={sidebarStyle}>
-        {/* Header del sidebar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '1rem 1.25rem',
-          borderBottom: '1px solid #edf2f7',
-        }}>
-          <button
-            onClick={() => navigate('/dashboard')}
+      {isMobile && open && (
+        <div
+          onClick={onClose}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 20,
+          }}
+        />
+      )}
+      <aside
+        style={styles}
+        onMouseEnter={() => {
+          if (isDesktop && isCollapsed) setIsHovered(true);
+        }}
+        onMouseLeave={() => {
+          if (isDesktop && isCollapsed) setIsHovered(false);
+        }}
+      >
+        {/* Logo + sección activa */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem 0.5rem',
+            borderBottom: '1px solid #e2e8f0',
+            flexShrink: 0,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <img
+            src="/images/sonder-logo.png"
+            alt="sonder"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.625rem',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
+              width: showFull ? '72px' : '36px',
+              height: showFull ? '72px' : '36px',
+              objectFit: 'contain',
+              transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              marginBottom: showFull ? '0.4rem' : '0.2rem',
             }}
-          >
-            <div style={{
-              width: '2rem',
-              height: '2rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#0b3b4c',
-            }}>
-              <Zap style={{ width: '1rem', height: '1rem', color: '#ffffff' }} />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <span style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontWeight: 700,
-                fontSize: '1rem',
-                letterSpacing: '0.02em',
-                color: '#1e293b',
-              }}>sonder</span>
-              <p style={{
-                color: '#94a3b8',
-                fontSize: '0.625rem',
-                lineHeight: 1,
-                marginTop: '0.125rem',
-              }}>Todo tu negocio en movimiento</p>
-            </div>
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              display: 'block',
-              color: '#94a3b8',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0.25rem',
-            }}
-          >
-            <X style={{ width: '1.25rem', height: '1.25rem' }} />
-          </button>
+          />
+          {showFull ? (
+            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0, textAlign: 'center' }}>
+              Todo tu negocio en movimiento
+            </p>
+          ) : (
+            <p
+              style={{
+                fontSize: '0.45rem',
+                color: '#0b3b4c',
+                margin: 0,
+                textAlign: 'center',
+                fontWeight: 600,
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                maxWidth: '56px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {activeSection}
+            </p>
+          )}
         </div>
 
         {/* Navegación */}
-        <nav style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '1rem 0.75rem',
-        }}>
+        <nav
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '0.5rem 0',
+            overflowX: 'hidden',
+          }}
+        >
           {navGroups.map((group) => {
-            const visibleItems = group.items.filter(
-              (item) => !item.adminOnly || isAdmin
-            );
+            const visibleItems = group.items.filter((item) => !item.adminOnly || isAdmin);
             if (visibleItems.length === 0) return null;
             return (
-              <div key={group.title} style={{ marginBottom: '1.25rem' }}>
-                <p style={{
-                  padding: '0 0.75rem',
-                  marginBottom: '0.375rem',
-                  fontSize: '0.625rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  color: '#94a3b8',
-                }}>
-                  {group.title}
-                </p>
+              <div key={group.title} style={{ marginBottom: '1rem' }}>
+                {showFull && (
+                  <p
+                    style={{
+                      padding: '0.5rem 1rem',
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: '#94a3b8',
+                      margin: 0,
+                    }}
+                  >
+                    {group.title}
+                  </p>
+                )}
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {visibleItems.map((item) => (
-                    <li key={item.to} style={{ marginBottom: '0.125rem' }}>
+                    <li key={item.to} style={{ margin: '0.1rem 0' }}>
                       <NavLink
                         to={item.to}
-                        onClick={onClose}
+                        className="sidebar-nav-link"
+                        onClick={() => {
+                          if (isMobile) onClose();
+                        }}
                         style={({ isActive }) => ({
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.75rem',
-                          padding: '0.5rem 0.75rem',
+                          padding: '0.5rem 1rem',
+                          margin: '0 0.5rem',
                           borderRadius: '0.5rem',
+                          color: isActive ? '#0b3b4c' : '#64748b',
+                          backgroundColor: isActive ? '#e2e8f0' : 'transparent',
+                          fontWeight: isActive ? 600 : 500,
                           fontSize: '0.875rem',
-                          fontWeight: 500,
-                          color: isActive ? '#ffffff' : '#475569',
-                          background: isActive ? '#0b3b4c' : 'transparent',
                           textDecoration: 'none',
                           transition: 'background 0.15s, color 0.15s',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          position: 'relative',
                         })}
-                        onMouseEnter={(e) => {
-                          if (!e.currentTarget.classList.contains('active')) {
-                            e.currentTarget.style.background = '#f1f5f9';
-                            e.currentTarget.style.color = '#1e293b';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!e.currentTarget.classList.contains('active')) {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = '#475569';
-                          }
-                        }}
                       >
-                        <item.icon style={{ width: '1rem', height: '1rem', flexShrink: 0 }} />
-                        {item.label}
+                        <item.icon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+                        {showFull && <span>{item.label}</span>}
+                        {!showFull && (
+                          <span className="sidebar-tooltip">{item.label}</span>
+                        )}
                       </NavLink>
                     </li>
                   ))}
@@ -229,57 +265,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           })}
         </nav>
 
-        {/* Footer del sidebar (perfil de usuario) */}
-        <div style={{
-          padding: '0.75rem 0.75rem',
-          borderTop: '1px solid #edf2f7',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '0.5rem',
-            background: '#f8fafc',
-          }}>
-            <div style={{
-              width: '2rem',
-              height: '2rem',
-              borderRadius: '9999px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#0b3b4c',
-              color: '#ffffff',
-              fontSize: '0.75rem',
-              fontWeight: 'bold',
-              flexShrink: 0,
-            }}>
-              {profile?.full_name?.charAt(0)?.toUpperCase() || '?'}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <p style={{
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                color: '#1e293b',
-                margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {profile?.full_name || 'Usuario'}
-              </p>
-              <p style={{
-                fontSize: '0.625rem',
-                color: '#94a3b8',
-                margin: 0,
-                textTransform: 'capitalize',
-              }}>
-                {profile?.role === 'admin' ? 'Administrador' : 'Empleado'}
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Espacio inferior vacío (sin perfil) */}
+        <div style={{ flexShrink: 0, height: '0.75rem' }} />
       </aside>
     </>
   );

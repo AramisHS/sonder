@@ -1,0 +1,211 @@
+import { useState, useEffect } from 'react';
+import { Plus, Pencil, Trash2, Search, Tag, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { supabase } from '../../lib/supabase';
+import { useAuthStore } from '../../store/authStore';
+import Modal from '../../components/Modal';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
+import { logAudit } from '../../lib/audit';
+import type { Category } from '../../lib/types';
+
+const schema = z.object({
+  name: z.string().min(1, 'Requerido'),
+  description: z.string().optional(),
+  active: z.boolean(),
+});
+type FormData = z.infer<typeof schema>;
+
+export default function Categories() {
+  const { profile } = useAuthStore();
+  const isAdmin = profile?.role === 'admin';
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { active: true },
+  });
+
+  const fetch = async () => {
+    setLoading(true);
+    const { data } = await supabase.from('categories').select('*').order('name');
+    setCategories(data ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetch(); }, []);
+
+  const filtered = categories.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const PAGE_SIZE = 16;
+  const { paginatedItems, currentPage, totalPages, goToPage } = usePagination(filtered, PAGE_SIZE);
+
+  const openCreate = () => {
+    setEditing(null);
+    reset({ name: '', description: '', active: true });
+    setModalOpen(true);
+  };
+
+  const openEdit = (cat: Category) => {
+    setEditing(cat);
+    reset({ name: cat.name, description: cat.description ?? '', active: cat.active });
+    setModalOpen(true);
+  };
+
+  const onSubmit = async (data: FormData) => {
+    if (!profile) return;
+    setSaving(true);
+    if (editing) {
+      await supabase.from('categories').update({ name: data.name, description: data.description || null, active: data.active }).eq('id', editing.id);
+      await logAudit(profile.id, 'UPDATE', 'categories', editing.id, editing, data);
+    } else {
+      const { data: created } = await supabase.from('categories').insert({ name: data.name, description: data.description || null, active: data.active }).select().single();
+      if (created) await logAudit(profile.id, 'INSERT', 'categories', created.id, null, data);
+    }
+    setSaving(false);
+    setModalOpen(false);
+    fetch();
+  };
+
+  const handleDelete = async (cat: Category) => {
+    if (!confirm(`¿Eliminar categoría "${cat.name}"?`)) return;
+    await supabase.from('categories').delete().eq('id', cat.id);
+    if (profile) await logAudit(profile.id, 'DELETE', 'categories', cat.id, cat, null);
+    fetch();
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', flexShrink: 0 }}>
+        <div>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Categorías</h1>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{filtered.length} categorías</p>
+        </div>
+        {isAdmin && (
+          <button onClick={openCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>
+            <Plus style={{ width: '1rem', height: '1rem' }} /> Nueva categoría
+          </button>
+        )}
+      </div>
+
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar categoría..." className="input" style={{ paddingLeft: '2.25rem' }} />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: '0 1 auto',
+          maxHeight: '100%',
+          minHeight: 0,
+          border: '1px solid #e2e8f0',
+          borderRadius: '0.75rem',
+          overflow: 'hidden',
+          background: '#ffffff',
+        }}
+      >
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+          </div>
+        ) : (
+          <div
+            style={{
+              flex: '1 1 0%',
+              minHeight: 0,
+              overflowY: 'auto',
+            }}
+          >
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Nombre</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Descripción</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Estado</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Creada</th>
+                  {isAdmin && <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1, textAlign: 'right' }}>Acciones</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedItems.length === 0 ? (
+                  <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <Tag style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
+                    Sin categorías
+                  </td></tr>
+                ) : (
+                  paginatedItems.map((cat) => (
+                    <tr key={cat.id}>
+                      <td style={{ fontWeight: 500 }}>{cat.name}</td>
+                      <td style={{ color: '#64748b' }}>{cat.description ?? '—'}</td>
+                      <td>
+                        <span className={`badge ${cat.active ? 'badge-success' : 'badge-neutral'}`}>
+                          {cat.active ? 'Activa' : 'Inactiva'}
+                        </span>
+                      </td>
+                      <td style={{ color: '#64748b' }}>{new Date(cat.created_at).toLocaleDateString('es-MX')}</td>
+                      {isAdmin && (
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem' }}>
+                            <button onClick={() => openEdit(cat)} style={{ padding: '0.375rem', borderRadius: '0.5rem', border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>
+                              <Pencil style={{ width: '1rem', height: '1rem' }} />
+                            </button>
+                            <button onClick={() => handleDelete(cat)} style={{ padding: '0.375rem', borderRadius: '0.5rem', border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>
+                              <Trash2 style={{ width: '1rem', height: '1rem' }} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+                {paginatedItems.length > 0 &&
+                  Array.from({ length: Math.max(0, PAGE_SIZE - paginatedItems.length) }).map((_, i) => (
+                    <tr key={`empty-${i}`} aria-hidden="true" style={{ height: '56px' }}>
+                      <td colSpan={isAdmin ? 5 : 4} style={{ height: '56px', padding: 0 }}>&nbsp;</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div style={{ flexShrink: 0 }}>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
+      </div>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar categoría' : 'Nueva categoría'}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label className="label">Nombre *</label>
+            <input {...register('name')} className="input" placeholder="Electrónicos" />
+            {errors.name && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.name.message}</p>}
+          </div>
+          <div>
+            <label className="label">Descripción</label>
+            <textarea {...register('description')} className="input" style={{ resize: 'vertical', minHeight: '5rem' }} placeholder="Descripción opcional..." />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" id="active" {...register('active')} style={{ width: '1rem', height: '1rem', accentColor: '#0b3b4c' }} />
+            <label htmlFor="active" style={{ fontSize: '0.875rem', color: '#64748b' }}>Categoría activa</label>
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
+            <button type="button" onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#f1f5f9', color: '#334155', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>Cancelar</button>
+            <button type="submit" disabled={saving} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>{saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}{editing ? 'Guardar' : 'Crear'}</button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}

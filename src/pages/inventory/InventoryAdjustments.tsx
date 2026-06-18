@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import Modal from '../../components/Modal';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 import { logAudit } from '../../lib/audit';
 import type { InventoryAdjustment, Product, Profile } from '../../lib/types';
 
@@ -36,21 +38,13 @@ export default function InventoryAdjustments() {
   useEffect(() => {
     const p = products.find((pr) => pr.id === watchProduct);
     setSelectedProduct(p ?? null);
-    if (p) {
-      reset((prev) => ({ ...prev, new_quantity: p.stock }));
-    }
+    if (p) reset((prev) => ({ ...prev, new_quantity: p.stock }));
   }, [watchProduct, products]);
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const { data: adjustmentsData, error: adjError } = await supabase
-        .from('inventory_adjustments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
-      if (adjError) throw adjError;
-
+      const { data: adjustmentsData } = await supabase.from('inventory_adjustments').select('*').order('created_at', { ascending: false }).limit(1000);
       const { data: productsData } = await supabase.from('products').select('id, name, unit');
       const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
       const { data: allProducts } = await supabase.from('products').select('*').eq('status', 'active').order('name');
@@ -74,6 +68,13 @@ export default function InventoryAdjustments() {
 
   useEffect(() => { fetchAll(); }, []);
 
+  const filtered = adjustments.filter((a) =>
+    (a.products as Product | null)?.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const PAGE_SIZE = 16;
+  const { paginatedItems, currentPage, totalPages, goToPage } = usePagination(filtered, PAGE_SIZE);
+
   const onSubmit = async (data: FormData) => {
     if (!profile) return;
     setSaving(true);
@@ -94,103 +95,103 @@ export default function InventoryAdjustments() {
     setSaving(false);
   };
 
-  const filtered = adjustments.filter((a) =>
-    (a.products as Product | null)?.name?.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', flexShrink: 0 }}>
         <div>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Ajustes de inventario</h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{adjustments.length} registros</p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{filtered.length} registros</p>
         </div>
-        <button
-          onClick={() => { reset({ new_quantity: 0 }); setModalOpen(true); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem 1rem',
-            borderRadius: '0.5rem',
-            background: '#0b3b4c',
-            color: '#ffffff',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: 500,
-            fontSize: '0.875rem',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
-        >
+        <button onClick={() => { reset({ new_quantity: 0 }); setModalOpen(true); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>
           <Plus style={{ width: '1rem', height: '1rem' }} /> Nuevo ajuste
         </button>
       </div>
 
-      <div style={{ position: 'relative', width: '100%' }}>
+      <div style={{ position: 'relative', flexShrink: 0 }}>
         <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por producto..."
-          className="input"
-          style={{ paddingLeft: '2.25rem' }}
-        />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por producto..." className="input" style={{ paddingLeft: '2.25rem' }} />
       </div>
 
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
-        </div>
-      ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Producto</th>
-                <th>Stock anterior</th>
-                <th>Stock nuevo</th>
-                <th>Diferencia</th>
-                <th>Motivo</th>
-                <th>Registrado por</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: '0 1 auto',
+          maxHeight: '100%',
+          minHeight: 0,
+          border: '1px solid #e2e8f0',
+          borderRadius: '0.75rem',
+          overflow: 'hidden',
+          background: '#ffffff',
+        }}
+      >
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+          </div>
+        ) : (
+          <div
+            style={{
+              flex: '1 1 0%',
+              minHeight: 0,
+              overflowY: 'auto',
+            }}
+          >
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
-                    <Sliders style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
-                    Sin ajustes registrados
-                  </td>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Fecha</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Producto</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Stock anterior</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Stock nuevo</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Diferencia</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Motivo</th>
+                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Registrado por</th>
                 </tr>
-              ) : (
-                filtered.map((a) => {
-                  const diff = a.quantity_after - a.quantity_before;
-                  return (
-                    <tr key={a.id}>
-                      <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
-                        {new Date(a.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                      <td style={{ fontWeight: 500 }}>{(a.products as Product | null)?.name ?? '—'}</td>
-                      <td style={{ color: '#64748b' }}>{a.quantity_before} {(a.products as Product | null)?.unit}</td>
-                      <td style={{ fontWeight: 600 }}>{a.quantity_after} {(a.products as Product | null)?.unit}</td>
-                      <td>
-                        <span style={{ fontWeight: 600, color: diff > 0 ? '#059669' : diff < 0 ? '#dc2626' : '#64748b' }}>
-                          {diff > 0 ? '+' : ''}{diff}
-                        </span>
-                      </td>
-                      <td style={{ maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>{a.reason ?? '—'}</td>
-                      <td style={{ color: '#64748b' }}>{(a.profiles as Profile | null)?.full_name ?? '—'}</td>
+              </thead>
+              <tbody>
+                {paginatedItems.length === 0 ? (
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                    <Sliders style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
+                    Sin ajustes
+                  </td></tr>
+                ) : (
+                  paginatedItems.map((a) => {
+                    const diff = a.quantity_after - a.quantity_before;
+                    return (
+                      <tr key={a.id}>
+                        <td style={{ whiteSpace: 'nowrap', color: '#64748b', fontSize: '0.75rem' }}>
+                          {new Date(a.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td style={{ fontWeight: 500 }}>{(a.products as Product | null)?.name ?? '—'}</td>
+                        <td style={{ color: '#64748b' }}>{a.quantity_before} {(a.products as Product | null)?.unit}</td>
+                        <td style={{ fontWeight: 600 }}>{a.quantity_after} {(a.products as Product | null)?.unit}</td>
+                        <td>
+                          <span style={{ fontWeight: 600, color: diff > 0 ? '#059669' : diff < 0 ? '#dc2626' : '#64748b' }}>
+                            {diff > 0 ? '+' : ''}{diff}
+                          </span>
+                        </td>
+                        <td style={{ maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>{a.reason ?? '—'}</td>
+                        <td style={{ color: '#64748b' }}>{(a.profiles as Profile | null)?.full_name ?? '—'}</td>
+                      </tr>
+                    );
+                  })
+                )}
+                {paginatedItems.length > 0 &&
+                  Array.from({ length: Math.max(0, PAGE_SIZE - paginatedItems.length) }).map((_, i) => (
+                    <tr key={`empty-${i}`} aria-hidden="true" style={{ height: '56px' }}>
+                      <td colSpan={7} style={{ height: '56px', padding: 0 }}>&nbsp;</td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div style={{ flexShrink: 0 }}>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
+      </div>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuevo ajuste de inventario" size="md">
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -198,79 +199,28 @@ export default function InventoryAdjustments() {
             <label className="label">Producto *</label>
             <select {...register('product_id')} className="input">
               <option value="">Seleccionar producto</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} (stock: {p.stock} {p.unit})</option>
-              ))}
+              {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock: {p.stock} {p.unit})</option>)}
             </select>
-            {errors.product_id && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{errors.product_id.message}</p>}
+            {errors.product_id && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.product_id.message}</p>}
           </div>
-
           {selectedProduct && (
-            <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', fontSize: '0.875rem' }}>
-              <p style={{ margin: 0, fontWeight: 500 }}>
-                Stock actual: <span style={{ fontWeight: 700 }}>{selectedProduct.stock} {selectedProduct.unit}</span>
-              </p>
+            <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <p style={{ margin: 0, fontWeight: 500 }}>Stock actual: <span style={{ fontWeight: 700 }}>{selectedProduct.stock} {selectedProduct.unit}</span></p>
             </div>
           )}
-
           <div>
             <label className="label">Nueva cantidad *</label>
             <input {...register('new_quantity')} type="number" step="0.01" min="0" className="input" />
-            {errors.new_quantity && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{errors.new_quantity.message}</p>}
+            {errors.new_quantity && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.new_quantity.message}</p>}
           </div>
-
           <div>
             <label className="label">Motivo del ajuste *</label>
             <textarea {...register('reason')} className="input" style={{ resize: 'vertical', minHeight: '4rem' }} placeholder="Ej: Conteo físico, merma, robo, etc." />
-            {errors.reason && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{errors.reason.message}</p>}
+            {errors.reason && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.reason.message}</p>}
           </div>
-
           <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => setModalOpen(false)}
-              style={{
-                flex: 1,
-                padding: '0.5rem 0',
-                borderRadius: '0.5rem',
-                background: '#f1f5f9',
-                color: '#334155',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: 500,
-                fontSize: '0.875rem',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              style={{
-                flex: 1,
-                padding: '0.5rem 0',
-                borderRadius: '0.5rem',
-                background: '#0b3b4c',
-                color: '#ffffff',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: 500,
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
-            >
-              {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
-              Registrar ajuste
-            </button>
+            <button type="button" onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#f1f5f9', color: '#334155', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>Cancelar</button>
+            <button type="submit" disabled={saving} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>{saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}Registrar ajuste</button>
           </div>
         </form>
       </Modal>

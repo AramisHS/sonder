@@ -7,7 +7,17 @@ import { supabase } from '../lib/supabase';
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [lowStockCount, setLowStockCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchLowStock = async () => {
@@ -21,12 +31,32 @@ export default function Layout() {
     fetchLowStock();
   }, []);
 
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
+
+  const closeSidebar = () => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-body)' }}>
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        open={sidebarOpen}
+        isCollapsed={isCollapsed}
+        onClose={closeSidebar}
+        onToggleCollapse={toggleSidebar}
+        isMobile={isMobile}
+      />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', width: '100%' }}>
-        <Header onMenuClick={() => setSidebarOpen(true)} lowStockCount={lowStockCount} />
-        <main style={{ flex: 1, overflowY: 'auto', padding: '1rem', width: '100%', boxSizing: 'border-box' }}>
+        <Header onMenuClick={toggleSidebar} lowStockCount={lowStockCount} />
+        <main style={{ flex: 1, overflow: 'hidden', padding: '1rem', width: '100%', boxSizing: 'border-box', minHeight: 0 }}>
           <Outlet />
         </main>
         <Footer />
