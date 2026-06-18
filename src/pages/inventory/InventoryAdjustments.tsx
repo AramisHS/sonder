@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import Modal from '../../components/Modal';
 import { logAudit } from '../../lib/audit';
-import type { InventoryAdjustment, Product } from '../../lib/types';
+import type { InventoryAdjustment, Product, Profile } from '../../lib/types';
 
 const schema = z.object({
   product_id: z.string().min(1, 'Selecciona un producto'),
@@ -43,16 +43,32 @@ export default function InventoryAdjustments() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [{ data: a }, { data: p }] = await Promise.all([
-      supabase
+    try {
+      const { data: adjustmentsData, error: adjError } = await supabase
         .from('inventory_adjustments')
-        .select('*, products(name,unit), profiles(full_name)')
+        .select('*')
         .order('created_at', { ascending: false })
-        .limit(200),
-      supabase.from('products').select('*').eq('status', 'active').order('name'),
-    ]);
-    setAdjustments(a ?? []);
-    setProducts(p ?? []);
+        .limit(200);
+      if (adjError) throw adjError;
+
+      const { data: productsData } = await supabase.from('products').select('id, name, unit');
+      const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
+      const { data: allProducts } = await supabase.from('products').select('*').eq('status', 'active').order('name');
+
+      const productMap = Object.fromEntries((productsData ?? []).map(p => [p.id, p]));
+      const profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.id, p]));
+
+      const enriched = (adjustmentsData ?? []).map(adj => ({
+        ...adj,
+        products: productMap[adj.product_id] || null,
+        profiles: adj.created_by ? profileMap[adj.created_by] || null : null,
+      }));
+
+      setAdjustments(enriched);
+      setProducts(allProducts ?? []);
+    } catch (error) {
+      console.error('Error fetching adjustments:', error);
+    }
     setLoading(false);
   };
 
@@ -79,7 +95,7 @@ export default function InventoryAdjustments() {
   };
 
   const filtered = adjustments.filter((a) =>
-    (a.products as { name: string } | null)?.name?.toLowerCase().includes(search.toLowerCase())
+    (a.products as Product | null)?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -87,7 +103,7 @@ export default function InventoryAdjustments() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Ajustes de inventario</h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Correcciones manuales de stock</p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{adjustments.length} registros</p>
         </div>
         <button
           onClick={() => { reset({ new_quantity: 0 }); setModalOpen(true); }}
@@ -100,9 +116,9 @@ export default function InventoryAdjustments() {
             background: '#0b3b4c',
             color: '#ffffff',
             border: 'none',
+            cursor: 'pointer',
             fontWeight: 500,
             fontSize: '0.875rem',
-            cursor: 'pointer',
             transition: 'background 0.15s',
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
@@ -157,16 +173,16 @@ export default function InventoryAdjustments() {
                       <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                         {new Date(a.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td style={{ fontWeight: 500 }}>{(a.products as { name: string } | null)?.name ?? '—'}</td>
-                      <td style={{ color: '#64748b' }}>{a.quantity_before} {(a.products as { unit: string } | null)?.unit}</td>
-                      <td style={{ fontWeight: 600 }}>{a.quantity_after} {(a.products as { unit: string } | null)?.unit}</td>
+                      <td style={{ fontWeight: 500 }}>{(a.products as Product | null)?.name ?? '—'}</td>
+                      <td style={{ color: '#64748b' }}>{a.quantity_before} {(a.products as Product | null)?.unit}</td>
+                      <td style={{ fontWeight: 600 }}>{a.quantity_after} {(a.products as Product | null)?.unit}</td>
                       <td>
                         <span style={{ fontWeight: 600, color: diff > 0 ? '#059669' : diff < 0 ? '#dc2626' : '#64748b' }}>
                           {diff > 0 ? '+' : ''}{diff}
                         </span>
                       </td>
                       <td style={{ maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>{a.reason ?? '—'}</td>
-                      <td style={{ color: '#64748b' }}>{(a.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                      <td style={{ color: '#64748b' }}>{(a.profiles as Profile | null)?.full_name ?? '—'}</td>
                     </tr>
                   );
                 })
@@ -232,6 +248,7 @@ export default function InventoryAdjustments() {
             </button>
             <button
               type="submit"
+              disabled={saving}
               style={{
                 flex: 1,
                 padding: '0.5rem 0',

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ClipboardList, Search, Loader2, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import Modal from '../../components/Modal';
-import type { AuditLog as AuditLogType } from '../../lib/types';
+import type { AuditLog as AuditLogType, Profile } from '../../lib/types';
 
 const ACTION_COLORS: Record<string, string> = {
   INSERT: 'badge-brand',
@@ -24,28 +24,42 @@ export default function AuditLog() {
 
   const fetchLogs = async () => {
     setLoading(true);
-    let query = supabase
-      .from('audit_log')
-      .select('*, profiles(full_name)')
-      .order('created_at', { ascending: false })
-      .limit(1000);
+    try {
+      let query = supabase
+        .from('audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000);
 
-    if (filterAction !== 'all') query = query.eq('action', filterAction);
-    if (dateFrom) query = query.gte('created_at', new Date(dateFrom).toISOString());
-    if (dateTo) {
-      const end = new Date(dateTo);
-      end.setHours(23, 59, 59, 999);
-      query = query.lte('created_at', end.toISOString());
+      if (filterAction !== 'all') query = query.eq('action', filterAction);
+      if (dateFrom) query = query.gte('created_at', new Date(dateFrom).toISOString());
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', end.toISOString());
+      }
+      const { data: auditData, error } = await query;
+      if (error) throw error;
+
+      const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
+      const profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.id, p]));
+
+      const enriched = (auditData ?? []).map(log => ({
+        ...log,
+        profiles: log.user_id ? profileMap[log.user_id] || null : null,
+      }));
+
+      setLogs(enriched);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
     }
-    const { data } = await query;
-    setLogs(data ?? []);
     setLoading(false);
   };
 
   useEffect(() => { fetchLogs(); }, [filterAction, dateFrom, dateTo]);
 
   const filtered = logs.filter((l) =>
-    [l.table_name, l.action, (l.profiles as { full_name: string } | null)?.full_name].some((v) =>
+    [l.table_name, l.action, (l.profiles as Profile | null)?.full_name].some((v) =>
       v?.toLowerCase().includes(search.toLowerCase())
     )
   );
@@ -54,13 +68,11 @@ export default function AuditLog() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
-      {/* Header */}
       <div>
         <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Auditoría</h1>
-        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Registro completo de acciones del sistema</p>
+        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{logs.length} registros</p>
       </div>
 
-      {/* Filters */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0.75rem', width: '100%' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
           <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
@@ -97,7 +109,6 @@ export default function AuditLog() {
         />
       </div>
 
-      {/* Table */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
           <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
@@ -133,8 +144,8 @@ export default function AuditLog() {
                         {log.action}
                       </span>
                     </td>
-                    <td style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem' }}>{log.table_name}</td>
-                    <td style={{ color: '#64748b' }}>{(log.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{log.table_name}</td>
+                    <td style={{ color: '#64748b' }}>{(log.profiles as Profile | null)?.full_name ?? '—'}</td>
                     <td style={{ textAlign: 'right' }}>
                       {(log.old_data || log.new_data) && (
                         <button
@@ -163,7 +174,6 @@ export default function AuditLog() {
         </div>
       )}
 
-      {/* Detail Modal */}
       <Modal open={!!selectedLog} onClose={() => setSelectedLog(null)} title="Detalles de auditoría" size="xl">
         {selectedLog && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -176,7 +186,7 @@ export default function AuditLog() {
               </div>
               <div>
                 <p style={{ color: '#64748b' }}>Tabla</p>
-                <p style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 500 }}>{selectedLog.table_name}</p>
+                <p style={{ fontFamily: 'monospace', fontWeight: 500 }}>{selectedLog.table_name}</p>
               </div>
             </div>
             {selectedLog.old_data && (

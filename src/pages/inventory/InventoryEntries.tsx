@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import Modal from '../../components/Modal';
 import { logAudit } from '../../lib/audit';
-import type { InventoryEntry, Product, Supplier } from '../../lib/types';
+import type { InventoryEntry, Product, Supplier, Profile } from '../../lib/types';
 
 const schema = z.object({
   product_id: z.string().min(1, 'Selecciona un producto'),
@@ -46,18 +46,35 @@ export default function InventoryEntries() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [{ data: e }, { data: p }, { data: s }] = await Promise.all([
-      supabase
+    try {
+      const { data: entriesData, error: entriesError } = await supabase
         .from('inventory_entries')
-        .select('*, products(name,unit), suppliers(name), profiles(full_name)')
+        .select('*')
         .order('created_at', { ascending: false })
-        .limit(200),
-      supabase.from('products').select('*').eq('status', 'active').order('name'),
-      supabase.from('suppliers').select('*').eq('active', true).order('name'),
-    ]);
-    setEntries(e ?? []);
-    setProducts(p ?? []);
-    setSuppliers(s ?? []);
+        .limit(200);
+      if (entriesError) throw entriesError;
+
+      const { data: productsData } = await supabase.from('products').select('*').eq('status', 'active');
+      const { data: suppliersData } = await supabase.from('suppliers').select('*').eq('active', true);
+      const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
+
+      const productMap = Object.fromEntries((productsData ?? []).map(p => [p.id, p]));
+      const supplierMap = Object.fromEntries((suppliersData ?? []).map(s => [s.id, s]));
+      const profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.id, p]));
+
+      const enriched = (entriesData ?? []).map(entry => ({
+        ...entry,
+        products: productMap[entry.product_id] || null,
+        suppliers: entry.supplier_id ? supplierMap[entry.supplier_id] || null : null,
+        profiles: entry.created_by ? profileMap[entry.created_by] || null : null,
+      }));
+
+      setEntries(enriched);
+      setProducts(productsData ?? []);
+      setSuppliers(suppliersData ?? []);
+    } catch (error) {
+      console.error('Error fetching inventory entries:', error);
+    }
     setLoading(false);
   };
 
@@ -89,7 +106,7 @@ export default function InventoryEntries() {
     new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
 
   const filtered = entries.filter((e) =>
-    (e.products as { name: string } | null)?.name?.toLowerCase().includes(search.toLowerCase())
+    (e.products as Product | null)?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -97,7 +114,7 @@ export default function InventoryEntries() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Entradas de inventario</h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Registro de mercancía recibida</p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{entries.length} registros</p>
         </div>
         <button
           onClick={() => { reset({ purchase_price: 0, quantity: 1 }); setModalOpen(true); }}
@@ -110,9 +127,9 @@ export default function InventoryEntries() {
             background: '#0b3b4c',
             color: '#ffffff',
             border: 'none',
+            cursor: 'pointer',
             fontWeight: 500,
             fontSize: '0.875rem',
-            cursor: 'pointer',
             transition: 'background 0.15s',
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
@@ -165,12 +182,12 @@ export default function InventoryEntries() {
                     <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                       {new Date(e.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td style={{ fontWeight: 500 }}>{(e.products as { name: string } | null)?.name ?? '—'}</td>
-                    <td style={{ fontWeight: 600, color: '#0b3b4c' }}>+{e.quantity} {(e.products as { unit: string } | null)?.unit}</td>
+                    <td style={{ fontWeight: 500 }}>{(e.products as Product | null)?.name ?? '—'}</td>
+                    <td style={{ fontWeight: 600, color: '#0b3b4c' }}>+{e.quantity} {(e.products as Product | null)?.unit}</td>
                     <td>{e.purchase_price ? fmt(e.purchase_price) : '—'}</td>
-                    <td style={{ color: '#64748b' }}>{(e.suppliers as { name: string } | null)?.name ?? '—'}</td>
+                    <td style={{ color: '#64748b' }}>{(e.suppliers as Supplier | null)?.name ?? '—'}</td>
                     <td style={{ maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>{e.notes ?? '—'}</td>
-                    <td style={{ color: '#64748b' }}>{(e.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                    <td style={{ color: '#64748b' }}>{(e.profiles as Profile | null)?.full_name ?? '—'}</td>
                   </tr>
                 ))
               )}

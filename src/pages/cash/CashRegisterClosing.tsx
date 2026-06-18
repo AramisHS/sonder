@@ -32,12 +32,26 @@ export default function CashRegisterClosing() {
 
   const fetchClosings = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('cash_register_closings')
-      .select('*, profiles(full_name)')
-      .order('closing_date', { ascending: false })
-      .limit(30);
-    setClosings(data ?? []);
+    try {
+      const { data: closingsData, error } = await supabase
+        .from('cash_register_closings')
+        .select('*')
+        .order('closing_date', { ascending: false })
+        .limit(30);
+      if (error) throw error;
+
+      const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
+      const profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.id, p]));
+
+      const enriched = (closingsData ?? []).map(c => ({
+        ...c,
+        profiles: c.created_by ? profileMap[c.created_by] || null : null,
+      }));
+
+      setClosings(enriched);
+    } catch (error) {
+      console.error('Error fetching closings:', error);
+    }
     setLoading(false);
   };
 
@@ -107,18 +121,17 @@ export default function CashRegisterClosing() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
       <div>
         <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Corte de Caja</h1>
-        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Cierra la caja diaria y consulta cortes anteriores</p>
+        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{closings.length} cortes registrados</p>
       </div>
 
-      {/* New closing form */}
       <div style={{ padding: '1.25rem', border: '1px solid #edf2f7', borderRadius: '1rem', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <Calculator style={{ width: '1.25rem', height: '1.25rem', color: '#0b3b4c' }} />
           <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }}>Realizar corte</h2>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ flex: 1, minWidth: '150px' }}>
             <label className="label">Fecha del corte</label>
             <input
               type="date"
@@ -127,7 +140,7 @@ export default function CashRegisterClosing() {
               className="input"
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ flex: 1, minWidth: '150px' }}>
             <label className="label">Notas (opcional)</label>
             <input
               value={notes}
@@ -136,7 +149,7 @@ export default function CashRegisterClosing() {
               className="input"
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             {alreadyClosed ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: '#fef3c7', color: '#92400e', fontSize: '0.875rem' }}>
                 <AlertCircle style={{ width: '1rem', height: '1rem' }} />
@@ -145,6 +158,7 @@ export default function CashRegisterClosing() {
             ) : (
               <button
                 onClick={handleClosing}
+                disabled={saving}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -154,14 +168,13 @@ export default function CashRegisterClosing() {
                   background: '#0b3b4c',
                   color: '#ffffff',
                   border: 'none',
+                  cursor: 'pointer',
                   fontWeight: 500,
                   fontSize: '0.875rem',
-                  cursor: 'pointer',
                   transition: 'background 0.15s',
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
                 onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
-                // disabled controlled once
               >
                 {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
                 Realizar corte
@@ -171,7 +184,6 @@ export default function CashRegisterClosing() {
         </div>
       </div>
 
-      {/* History */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
           <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />

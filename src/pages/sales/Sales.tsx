@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Receipt, Search, Loader2, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import Modal from '../../components/Modal';
-import type { Sale, SaleItem } from '../../lib/types';
+import type { Sale, SaleItem, Profile, Product } from '../../lib/types';
 
 const PAYMENT_LABELS: Record<string, string> = {
   efectivo: 'Efectivo',
@@ -22,20 +22,34 @@ export default function Sales() {
 
   const fetchSales = async () => {
     setLoading(true);
-    let query = supabase
-      .from('sales')
-      .select('*, profiles(full_name)')
-      .order('created_at', { ascending: false })
-      .limit(500);
+    try {
+      let query = supabase
+        .from('sales')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
 
-    if (dateFrom) query = query.gte('created_at', new Date(dateFrom).toISOString());
-    if (dateTo) {
-      const end = new Date(dateTo);
-      end.setHours(23, 59, 59, 999);
-      query = query.lte('created_at', end.toISOString());
+      if (dateFrom) query = query.gte('created_at', new Date(dateFrom).toISOString());
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', end.toISOString());
+      }
+      const { data: salesData, error } = await query;
+      if (error) throw error;
+
+      const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
+      const profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.id, p]));
+
+      const enriched = (salesData ?? []).map(sale => ({
+        ...sale,
+        profiles: sale.created_by ? profileMap[sale.created_by] || null : null,
+      }));
+
+      setSales(enriched);
+    } catch (error) {
+      console.error('Error fetching sales:', error);
     }
-    const { data } = await query;
-    setSales(data ?? []);
     setLoading(false);
   };
 
@@ -43,11 +57,24 @@ export default function Sales() {
 
   const viewDetail = async (sale: Sale) => {
     setDetailLoading(true);
-    const { data } = await supabase
-      .from('sale_items')
-      .select('*, products(name,unit)')
-      .eq('sale_id', sale.id);
-    setDetailSale({ ...sale, items: data ?? [] });
+    try {
+      const { data: itemsData } = await supabase
+        .from('sale_items')
+        .select('*')
+        .eq('sale_id', sale.id);
+
+      const { data: productsData } = await supabase.from('products').select('id, name, unit');
+      const productMap = Object.fromEntries((productsData ?? []).map(p => [p.id, p]));
+
+      const enrichedItems = (itemsData ?? []).map(item => ({
+        ...item,
+        products: productMap[item.product_id] || null,
+      }));
+
+      setDetailSale({ ...sale, items: enrichedItems });
+    } catch (error) {
+      console.error('Error fetching sale detail:', error);
+    }
     setDetailLoading(false);
   };
 
@@ -55,7 +82,7 @@ export default function Sales() {
     new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
 
   const filtered = sales.filter((s) =>
-    [s.sale_number, (s.profiles as { full_name: string } | null)?.full_name].some((v) =>
+    [s.sale_number, (s.profiles as Profile | null)?.full_name].some((v) =>
       v?.toLowerCase().includes(search.toLowerCase())
     )
   );
@@ -68,12 +95,12 @@ export default function Sales() {
         <div>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Historial de ventas</h1>
           <p style={{ fontSize: '0.875rem', color: '#64748b' }}>
-            {filtered.length} ventas · Total: <span style={{ fontWeight: 600, color: '#0b3b4c' }}>{fmt(totalRevenue)}</span>
+            {filtered.length} ventas · Total: <span style={{ fontWeight: 600, color: '#059669' }}>{fmt(totalRevenue)}</span>
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0.75rem', width: '100%' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
           <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
           <input
@@ -135,14 +162,12 @@ export default function Sales() {
                     <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                       {new Date(s.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td style={{ color: '#64748b' }}>{(s.profiles as { full_name: string } | null)?.full_name ?? '—'}</td>
+                    <td style={{ color: '#64748b' }}>{(s.profiles as Profile | null)?.full_name ?? '—'}</td>
                     <td>
-                      <span className="badge badge-success">
-                        {PAYMENT_LABELS[s.payment_method] ?? s.payment_method}
-                      </span>
+                      <span className="badge-brand">{PAYMENT_LABELS[s.payment_method] ?? s.payment_method}</span>
                     </td>
                     <td style={{ color: '#64748b' }}>{s.discount > 0 ? fmt(s.discount) : '—'}</td>
-                    <td style={{ fontWeight: 700, color: '#0b3b4c' }}>{fmt(s.total)}</td>
+                    <td style={{ fontWeight: 700, color: '#059669' }}>{fmt(s.total)}</td>
                     <td style={{ textAlign: 'right' }}>
                       <button
                         onClick={() => viewDetail(s)}
@@ -169,13 +194,7 @@ export default function Sales() {
         </div>
       )}
 
-      {/* Detail Modal */}
-      <Modal
-        open={!!detailSale}
-        onClose={() => setDetailSale(null)}
-        title={`Detalle: ${detailSale?.sale_number ?? ''}`}
-        size="lg"
-      >
+      <Modal open={!!detailSale} onClose={() => setDetailSale(null)} title={`Detalle: ${detailSale?.sale_number ?? ''}`} size="lg">
         {detailLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
             <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
@@ -184,20 +203,20 @@ export default function Sales() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.875rem' }}>
               <div>
-                <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Fecha</p>
+                <p style={{ color: '#64748b' }}>Fecha</p>
                 <p style={{ fontWeight: 500 }}>{new Date(detailSale.created_at).toLocaleString('es-MX')}</p>
               </div>
               <div>
-                <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Vendedor</p>
-                <p style={{ fontWeight: 500 }}>{(detailSale.profiles as { full_name: string } | null)?.full_name ?? '—'}</p>
+                <p style={{ color: '#64748b' }}>Vendedor</p>
+                <p style={{ fontWeight: 500 }}>{(detailSale.profiles as Profile | null)?.full_name ?? '—'}</p>
               </div>
               <div>
-                <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Método de pago</p>
+                <p style={{ color: '#64748b' }}>Método de pago</p>
                 <p style={{ fontWeight: 500 }}>{PAYMENT_LABELS[detailSale.payment_method]}</p>
               </div>
               {detailSale.notes && (
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <p style={{ color: '#64748b', marginBottom: '0.25rem' }}>Notas</p>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <p style={{ color: '#64748b' }}>Notas</p>
                   <p style={{ fontWeight: 500 }}>{detailSale.notes}</p>
                 </div>
               )}
@@ -216,8 +235,8 @@ export default function Sales() {
                 <tbody>
                   {detailSale.items.map((item) => (
                     <tr key={item.id}>
-                      <td style={{ fontWeight: 500 }}>{(item.products as { name: string } | null)?.name ?? '—'}</td>
-                      <td>{item.quantity} {(item.products as { unit: string } | null)?.unit}</td>
+                      <td style={{ fontWeight: 500 }}>{(item.products as Product | null)?.name ?? '—'}</td>
+                      <td>{item.quantity} {(item.products as Product | null)?.unit}</td>
                       <td>{fmt(item.unit_price)}</td>
                       <td style={{ fontWeight: 600 }}>{fmt(item.subtotal)}</td>
                     </tr>
@@ -226,7 +245,7 @@ export default function Sales() {
               </table>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', fontSize: '0.875rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.875rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                 <span>Subtotal</span>
                 <span>{fmt(detailSale.items.reduce((s, i) => s + i.subtotal, 0))}</span>
@@ -237,9 +256,9 @@ export default function Sales() {
                   <span style={{ color: '#dc2626' }}>-{fmt(detailSale.discount)}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', color: '#1e293b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', marginTop: '0.25rem' }}>
                 <span>Total</span>
-                <span style={{ color: '#0b3b4c' }}>{fmt(detailSale.total)}</span>
+                <span style={{ color: '#059669' }}>{fmt(detailSale.total)}</span>
               </div>
             </div>
           </div>
