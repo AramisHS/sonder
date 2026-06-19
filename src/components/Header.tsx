@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, Moon, Sun, LogOut, User, ChevronDown } from 'lucide-react';
+import { Menu, Moon, Sun, LogOut, ChevronDown, Shield, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useThemeStore } from '../store/themeStore';
 import { useAuthStore } from '../store/authStore';
@@ -22,14 +22,11 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
     setDropdownOpen(false);
   };
 
-  // 🔥 1. EFECTO CRÍTICO: Añade o quita la clase del body cuando cambie el estado "dark"
   useEffect(() => {
     if (dark) {
       document.body.classList.add('dark-mode');
-      // O si usas atributos en tu CSS: document.documentElement.setAttribute('data-theme', 'dark');
     } else {
       document.body.classList.remove('dark-mode');
-      // document.documentElement.setAttribute('data-theme', 'light');
     }
   }, [dark]);
 
@@ -43,6 +40,11 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const role = profile?.role || 'employee';
+  const isAdmin = role === 'admin';
+  const roleLabel = isAdmin ? 'Administrador' : 'Empleado';
+  const RoleIcon = isAdmin ? Shield : UserIcon;
+
   return (
     <header
       style={{
@@ -52,7 +54,6 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
         justifyContent: 'space-between',
         padding: '0 1rem',
         flexShrink: 0,
-        // 🔥 Reemplazado por variables del archivo CSS para que cambien solas
         borderBottom: '1px solid var(--color-card-border)',
         backgroundColor: 'var(--color-card-bg)',
         transition: 'background-color 0.3s ease, border-color 0.3s ease',
@@ -130,7 +131,6 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
           {dark ? <Sun className="w-5 h-5" style={{ color: '#fbbf24' }} /> : <Moon className="w-5 h-5" />}
         </button>
 
-        {/* Perfil con dropdown conectado */}
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -158,7 +158,7 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
                 width: '2rem',
                 height: '2rem',
                 borderRadius: '9999px',
-                backgroundColor: 'var(--color-secondary)', /* Usa tu dorado identitario */
+                backgroundColor: 'var(--color-secondary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -170,9 +170,24 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
             >
               {profile?.full_name?.charAt(0)?.toUpperCase() || '?'}
             </div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
-              {profile?.full_name || 'Usuario'}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                {profile?.full_name || 'Usuario'}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.6rem',
+                  fontWeight: 500,
+                  color: 'var(--color-gray-400)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.2rem',
+                }}
+              >
+                <RoleIcon style={{ width: '0.7rem', height: '0.7rem' }} />
+                {roleLabel}
+              </span>
+            </div>
             <ChevronDown
               style={{
                 width: '1rem',
@@ -184,7 +199,6 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
             />
           </button>
 
-          {/* Dropdown CONECTADO */}
           {dropdownOpen && (
             <div
               style={{
@@ -201,7 +215,6 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
                 zIndex: 50,
               }}
             >
-              {/* Triángulo superior */}
               <div
                 style={{
                   position: 'absolute',
@@ -215,7 +228,6 @@ export default function Header({ onMenuClick, lowStockCount = 0 }: HeaderProps) 
                   zIndex: 2,
                 }}
               />
-              {/* Borde del triángulo */}
               <div
                 style={{
                   position: 'absolute',

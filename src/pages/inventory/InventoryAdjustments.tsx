@@ -99,16 +99,16 @@ export default function InventoryAdjustments() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', flexShrink: 0 }}>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Ajustes de inventario</h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{filtered.length} registros</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>Ajustes de inventario</h1>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>{filtered.length} registros</p>
         </div>
-        <button onClick={() => { reset({ new_quantity: 0 }); setModalOpen(true); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>
+        <button onClick={() => { reset({ new_quantity: 0 }); setModalOpen(true); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem', transition: 'background 0.15s' }}>
           <Plus style={{ width: '1rem', height: '1rem' }} /> Nuevo ajuste
         </button>
       </div>
 
       <div style={{ position: 'relative', flexShrink: 0 }}>
-        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: 'var(--color-gray-400)' }} />
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por producto..." className="input" style={{ paddingLeft: '2.25rem' }} />
       </div>
 
@@ -119,15 +119,16 @@ export default function InventoryAdjustments() {
           flex: '0 1 auto',
           maxHeight: '100%',
           minHeight: 0,
-          border: '1px solid #e2e8f0',
-          borderRadius: '0.75rem',
+          border: '1px solid var(--color-card-border)',
+          borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
-          background: '#ffffff',
+          background: 'var(--color-card-bg)',
+          transition: 'background 0.25s ease, border-color 0.25s ease',
         }}
       >
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: 'var(--color-primary)' }} />
           </div>
         ) : (
           <div
@@ -140,18 +141,18 @@ export default function InventoryAdjustments() {
             <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Fecha</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Producto</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Stock anterior</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Stock nuevo</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Diferencia</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Motivo</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Registrado por</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Fecha</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Producto</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Stock anterior</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Stock nuevo</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Diferencia</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Motivo</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Registrado por</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedItems.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem 0', color: 'var(--color-gray-400)' }}>
                     <Sliders style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin ajustes
                   </td></tr>
@@ -160,19 +161,19 @@ export default function InventoryAdjustments() {
                     const diff = a.quantity_after - a.quantity_before;
                     return (
                       <tr key={a.id}>
-                        <td style={{ whiteSpace: 'nowrap', color: '#64748b', fontSize: '0.75rem' }}>
+                        <td style={{ whiteSpace: 'nowrap', color: 'var(--color-gray-500)', fontSize: '0.75rem' }}>
                           {new Date(a.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </td>
-                        <td style={{ fontWeight: 500 }}>{(a.products as Product | null)?.name ?? '—'}</td>
-                        <td style={{ color: '#64748b' }}>{a.quantity_before} {(a.products as Product | null)?.unit}</td>
-                        <td style={{ fontWeight: 600 }}>{a.quantity_after} {(a.products as Product | null)?.unit}</td>
+                        <td style={{ fontWeight: 500, color: 'var(--color-gray-800)' }}>{(a.products as Product | null)?.name ?? '—'}</td>
+                        <td style={{ color: 'var(--color-gray-500)' }}>{a.quantity_before} {(a.products as Product | null)?.unit}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--color-gray-800)' }}>{a.quantity_after} {(a.products as Product | null)?.unit}</td>
                         <td>
-                          <span style={{ fontWeight: 600, color: diff > 0 ? '#059669' : diff < 0 ? '#dc2626' : '#64748b' }}>
+                          <span style={{ fontWeight: 600, color: diff > 0 ? 'var(--color-success)' : diff < 0 ? 'var(--color-error)' : 'var(--color-gray-500)' }}>
                             {diff > 0 ? '+' : ''}{diff}
                           </span>
                         </td>
-                        <td style={{ maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>{a.reason ?? '—'}</td>
-                        <td style={{ color: '#64748b' }}>{(a.profiles as Profile | null)?.full_name ?? '—'}</td>
+                        <td style={{ maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-gray-500)' }}>{a.reason ?? '—'}</td>
+                        <td style={{ color: 'var(--color-gray-500)' }}>{(a.profiles as Profile | null)?.full_name ?? '—'}</td>
                       </tr>
                     );
                   })
@@ -201,26 +202,41 @@ export default function InventoryAdjustments() {
               <option value="">Seleccionar producto</option>
               {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock: {p.stock} {p.unit})</option>)}
             </select>
-            {errors.product_id && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.product_id.message}</p>}
+            {errors.product_id && <p style={{ fontSize: '0.75rem', color: 'var(--color-error-text)', marginTop: '0.25rem' }}>{errors.product_id.message}</p>}
           </div>
           {selectedProduct && (
-            <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <p style={{ margin: 0, fontWeight: 500 }}>Stock actual: <span style={{ fontWeight: 700 }}>{selectedProduct.stock} {selectedProduct.unit}</span></p>
+            <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'var(--color-gray-50)', border: '1px solid var(--color-card-border)' }}>
+              <p style={{ margin: 0, fontWeight: 500, color: 'var(--color-gray-800)' }}>Stock actual: <span style={{ fontWeight: 700 }}>{selectedProduct.stock} {selectedProduct.unit}</span></p>
             </div>
           )}
           <div>
             <label className="label">Nueva cantidad *</label>
             <input {...register('new_quantity')} type="number" step="0.01" min="0" className="input" />
-            {errors.new_quantity && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.new_quantity.message}</p>}
+            {errors.new_quantity && <p style={{ fontSize: '0.75rem', color: 'var(--color-error-text)', marginTop: '0.25rem' }}>{errors.new_quantity.message}</p>}
           </div>
           <div>
             <label className="label">Motivo del ajuste *</label>
             <textarea {...register('reason')} className="input" style={{ resize: 'vertical', minHeight: '4rem' }} placeholder="Ej: Conteo físico, merma, robo, etc." />
-            {errors.reason && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.reason.message}</p>}
+            {errors.reason && <p style={{ fontSize: '0.75rem', color: 'var(--color-error-text)', marginTop: '0.25rem' }}>{errors.reason.message}</p>}
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
-            <button type="button" onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#f1f5f9', color: '#334155', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>Cancelar</button>
-            <button type="submit" disabled={saving} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>{saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}Registrar ajuste</button>
+            <button type="button" onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: 'var(--color-gray-100)', color: 'var(--color-gray-700)', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem', transition: 'background 0.15s' }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-gray-200)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-gray-100)'}
+            >
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'background 0.15s' }}
+              onMouseEnter={(e) => {
+                if (!saving) e.currentTarget.style.background = 'var(--color-primary-dark)';
+              }}
+              onMouseLeave={(e) => {
+                if (!saving) e.currentTarget.style.background = 'var(--color-primary)';
+              }}
+            >
+              {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
+              Registrar ajuste
+            </button>
           </div>
         </form>
       </Modal>

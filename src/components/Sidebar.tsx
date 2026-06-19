@@ -6,6 +6,7 @@ import {
   ArrowLeftRight, Calculator,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 
 interface SidebarProps {
   open: boolean;
@@ -30,7 +31,7 @@ interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     title: 'Principal',
-    items: [{ label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard }],
+    items: [{ label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, adminOnly: true }],
   },
   {
     title: 'Catálogo',
@@ -43,9 +44,9 @@ const navGroups: NavGroup[] = [
   {
     title: 'Inventario',
     items: [
-      { label: 'Entradas', to: '/entradas', icon: PackagePlus, adminOnly: true },
-      { label: 'Ajustes', to: '/ajustes', icon: Sliders, adminOnly: true },
-      { label: 'Movimientos', to: '/movimientos', icon: ArrowLeftRight },
+      { label: 'Entradas', to: '/entradas', icon: PackagePlus },
+      { label: 'Ajustes', to: '/ajustes', icon: Sliders},
+      { label: 'Movimientos', to: '/movimientos', icon: ArrowLeftRight, adminOnly: true },
     ],
   },
   {
@@ -53,7 +54,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Nueva Venta', to: '/nueva-venta', icon: ShoppingCart },
       { label: 'Historial', to: '/ventas', icon: Receipt },
-      { label: 'Corte de Caja', to: '/corte-de-caja', icon: Calculator, adminOnly: true },
+      { label: 'Corte de Caja', to: '/corte-de-caja', icon: Calculator },
     ],
   },
   {
@@ -75,8 +76,9 @@ const getSectionName = (path: string): string => {
   return '';
 };
 
-export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, isMobile }: SidebarProps) {
+export default function Sidebar({ open, onClose, isCollapsed, isMobile }: SidebarProps) {
   const { profile } = useAuthStore();
+  const { dark } = useThemeStore();
   const isAdmin = profile?.role === 'admin';
   const [isHovered, setIsHovered] = useState(false);
   const location = useLocation();
@@ -88,12 +90,12 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
   const baseStyles: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: '#ffffff',
-    borderRight: '1px solid #e2e8f0',
+    backgroundColor: 'var(--color-sidebar-bg)',
+    borderRight: '1px solid var(--color-sidebar-border)',
     boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
     overflow: 'hidden',
     flexShrink: 0,
-    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, border-color 0.3s ease',
     willChange: 'width',
   };
 
@@ -145,7 +147,6 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
           if (isDesktop && isCollapsed) setIsHovered(false);
         }}
       >
-        {/* Logo + sección activa */}
         <div
           style={{
             display: 'flex',
@@ -153,7 +154,7 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
             alignItems: 'center',
             justifyContent: 'center',
             padding: '1.25rem 0.5rem',
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid var(--color-sidebar-border)', // ← variable
             flexShrink: 0,
             overflow: 'hidden',
             whiteSpace: 'nowrap',
@@ -166,19 +167,20 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
               width: showFull ? '72px' : '36px',
               height: showFull ? '72px' : '36px',
               objectFit: 'contain',
-              transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease',
               marginBottom: showFull ? '0.4rem' : '0.2rem',
+              filter: dark ? 'invert(0.9) brightness(1.2)' : 'none',
             }}
           />
           {showFull ? (
-            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0, textAlign: 'center' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-gray-400)', margin: 0, textAlign: 'center' }}>
               Todo tu negocio en movimiento
             </p>
           ) : (
             <p
               style={{
                 fontSize: '0.45rem',
-                color: '#0b3b4c',
+                color: 'var(--color-primary)',
                 margin: 0,
                 textAlign: 'center',
                 fontWeight: 600,
@@ -195,7 +197,6 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
           )}
         </div>
 
-        {/* Navegación */}
         <nav
           style={{
             flex: 1,
@@ -217,7 +218,7 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
-                      color: '#94a3b8',
+                      color: 'var(--color-sidebar-title)',
                       margin: 0,
                     }}
                   >
@@ -240,8 +241,8 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
                           padding: '0.5rem 1rem',
                           margin: '0 0.5rem',
                           borderRadius: '0.5rem',
-                          color: isActive ? '#0b3b4c' : '#64748b',
-                          backgroundColor: isActive ? '#e2e8f0' : 'transparent',
+                          color: isActive ? 'var(--color-sidebar-text-active)' : 'var(--color-sidebar-text)',
+                          backgroundColor: isActive ? 'var(--color-sidebar-active-bg)' : 'transparent',
                           fontWeight: isActive ? 600 : 500,
                           fontSize: '0.875rem',
                           textDecoration: 'none',
@@ -265,7 +266,6 @@ export default function Sidebar({ open, onClose, isCollapsed, onToggleCollapse, 
           })}
         </nav>
 
-        {/* Espacio inferior vacío (sin perfil) */}
         <div style={{ flexShrink: 0, height: '0.75rem' }} />
       </aside>
     </>

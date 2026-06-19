@@ -39,7 +39,6 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
                 flexWrap: 'wrap',
             }}
         >
-            {/* Botón Ir al principio (primera página) */}
             <button
                 onClick={() => goToPage(1)}
                 disabled={currentPage === 1}
@@ -47,39 +46,38 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
                 style={{
                     padding: '0.25rem 0.5rem',
                     borderRadius: '0.375rem',
-                    border: '1px solid #e2e8f0',
-                    background: currentPage === 1 ? '#f1f5f9' : '#ffffff',
-                    color: currentPage === 1 ? '#94a3b8' : '#1e293b',
+                    border: '1px solid var(--color-card-border)',
+                    background: currentPage === 1 ? 'var(--color-gray-100)' : 'var(--color-card-bg)',
+                    color: currentPage === 1 ? 'var(--color-gray-400)' : 'var(--color-gray-800)',
                     cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                     fontSize: '0.75rem',
-                    transition: 'background 0.15s',
+                    transition: 'background 0.15s, color 0.15s, border-color 0.15s',
                 }}
             >
                 &lt;&lt;
             </button>
 
-            {/* Botón Anterior */}
             <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
                 style={{
                     padding: '0.25rem 0.5rem',
                     borderRadius: '0.375rem',
-                    border: '1px solid #e2e8f0',
-                    background: currentPage === 1 ? '#f1f5f9' : '#ffffff',
-                    color: currentPage === 1 ? '#94a3b8' : '#1e293b',
+                    border: '1px solid var(--color-card-border)',
+                    background: currentPage === 1 ? 'var(--color-gray-100)' : 'var(--color-card-bg)',
+                    color: currentPage === 1 ? 'var(--color-gray-400)' : 'var(--color-gray-800)',
                     cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                     fontSize: '0.75rem',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.25rem',
+                    transition: 'background 0.15s, color 0.15s, border-color 0.15s',
                 }}
             >
                 <ChevronLeft style={{ width: '0.875rem', height: '0.875rem' }} />
                 Anterior
             </button>
 
-            {/* Números de página */}
             {getPageNumbers().map((page) => (
                 <button
                     key={page}
@@ -87,42 +85,41 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
                     style={{
                         padding: '0.25rem 0.5rem',
                         borderRadius: '0.375rem',
-                        border: '1px solid #e2e8f0',
-                        background: page === currentPage ? '#0b3b4c' : '#ffffff',
-                        color: page === currentPage ? '#ffffff' : '#1e293b',
+                        border: '1px solid var(--color-card-border)',
+                        background: page === currentPage ? 'var(--color-primary)' : 'var(--color-card-bg)',
+                        color: page === currentPage ? '#ffffff' : 'var(--color-gray-800)',
                         cursor: 'pointer',
                         fontSize: '0.875rem',
                         fontWeight: page === currentPage ? 600 : 400,
                         minWidth: '2rem',
-                        transition: 'background 0.15s',
+                        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
                     }}
                 >
                     {page}
                 </button>
             ))}
 
-            {/* Botón Siguiente */}
             <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 style={{
                     padding: '0.25rem 0.5rem',
                     borderRadius: '0.375rem',
-                    border: '1px solid #e2e8f0',
-                    background: currentPage === totalPages ? '#f1f5f9' : '#ffffff',
-                    color: currentPage === totalPages ? '#94a3b8' : '#1e293b',
+                    border: '1px solid var(--color-card-border)',
+                    background: currentPage === totalPages ? 'var(--color-gray-100)' : 'var(--color-card-bg)',
+                    color: currentPage === totalPages ? 'var(--color-gray-400)' : 'var(--color-gray-800)',
                     cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                     fontSize: '0.75rem',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.25rem',
+                    transition: 'background 0.15s, color 0.15s, border-color 0.15s',
                 }}
             >
                 Siguiente
                 <ChevronRight style={{ width: '0.875rem', height: '0.875rem' }} />
             </button>
 
-            {/* Botón Ir al final (última página) */}
             <button
                 onClick={() => goToPage(totalPages)}
                 disabled={currentPage === totalPages}
@@ -130,19 +127,19 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
                 style={{
                     padding: '0.25rem 0.5rem',
                     borderRadius: '0.375rem',
-                    border: '1px solid #e2e8f0',
-                    background: currentPage === totalPages ? '#f1f5f9' : '#ffffff',
-                    color: currentPage === totalPages ? '#94a3b8' : '#1e293b',
+                    border: '1px solid var(--color-card-border)',
+                    background: currentPage === totalPages ? 'var(--color-gray-100)' : 'var(--color-card-bg)',
+                    color: currentPage === totalPages ? 'var(--color-gray-400)' : 'var(--color-gray-800)',
                     cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                     fontSize: '0.75rem',
+                    transition: 'background 0.15s, color 0.15s, border-color 0.15s',
                 }}
             >
                 &gt;&gt;
             </button>
 
-            {/* Input para ir a página específica */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginLeft: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Ir a</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>Ir a</span>
                 <input
                     type="number"
                     min={1}
@@ -160,13 +157,15 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
                         width: '3rem',
                         padding: '0.15rem 0.25rem',
                         borderRadius: '0.375rem',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--color-card-border)',
                         fontSize: '0.75rem',
                         textAlign: 'center',
-                        background: '#ffffff',
+                        background: 'var(--color-card-bg)',
+                        color: 'var(--color-gray-800)',
+                        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
                     }}
                 />
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>de {totalPages}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-400)' }}>de {totalPages}</span>
             </div>
         </div>
     );

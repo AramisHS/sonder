@@ -11,25 +11,24 @@ export default function Footer() {
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '0.5rem 1rem',
-        borderTop: '1px solid #e2e8f0',
-        backgroundColor: '#ffffff',
+        borderTop: '1px solid var(--color-card-border)',
+        backgroundColor: 'var(--color-card-bg)',
         flexShrink: 0,
+        transition: 'background-color 0.25s ease, border-color 0.25s ease',
       }}
     >
-      {/* Copyright y derechos reservados */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-400)' }}>
           &copy; {year} sonder
         </span>
-        <span style={{ fontSize: '0.75rem', color: '#d1d5db' }}>•</span>
-        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-300)' }}>•</span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-400)' }}>
           Todos los derechos reservados
         </span>
       </div>
 
-      {/* Redes sociales (ejemplo con Instagram) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Sígueme:</span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-400)' }}>Sígueme:</span>
         <a
           href="https://www.instagram.com/_jossrz/"
           target="_blank"
@@ -38,14 +37,14 @@ export default function Footer() {
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
-            color: '#0b3b4c',
+            color: 'var(--color-primary)',
             textDecoration: 'none',
             fontSize: '0.75rem',
             fontWeight: 500,
             transition: 'color 0.15s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#d97706')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#0b3b4c')}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-warning)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-primary)')}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

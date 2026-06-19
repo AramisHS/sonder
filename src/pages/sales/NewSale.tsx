@@ -2,14 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Minus, Trash2, ShoppingCart, CheckCircle,
-  Loader2, ScanBarcode, CreditCard, Banknote, ArrowLeftRight, X, Package, Camera, Lock,
+  Loader2, ScanBarcode, CreditCard, Banknote, ArrowLeftRight, X, Package, Lock,
   PlusCircle, User
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { logAudit } from '../../lib/audit';
 import { notifyLowStock } from '../../lib/whatsapp';
-import BarcodeScanner from '../../components/BarcodeScanner';
 import Modal from '../../components/Modal';
 import type { Product, CartItem, PaymentMethod } from '../../lib/types';
 
@@ -33,35 +32,54 @@ interface Cart {
   notes: string;
 }
 
+const STORAGE_KEY = 'sonder_carts';
 
 export default function NewSale() {
   const navigate = useNavigate();
   const { profile } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
-  const [scannerOpen, setScannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // ── Múltiples carritos ──
-  const [carts, setCarts] = useState<Cart[]>([
-    { id: '1', name: 'Cliente 1', items: [], discount: 0, paymentMethod: 'efectivo', notes: '' },
-  ]);
-  const [activeCartId, setActiveCartId] = useState('1');
+  const [carts, setCarts] = useState<Cart[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch { }
+    }
+    return [{ id: '1', name: 'Cliente 1', items: [], discount: 0, paymentMethod: 'efectivo', notes: '' }];
+  });
+  const [activeCartId, setActiveCartId] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY + '_active');
+    return stored || '1';
+  });
 
-  // ── Modal para producto genérico ──
   const [genericModalOpen, setGenericModalOpen] = useState(false);
   const [genericName, setGenericName] = useState('');
-  const [genericPrice, setGenericPrice] = useState(0);
+  const [genericPrice, setGenericPrice] = useState<number | ''>('');
 
-  // Obtener carrito activo
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(carts));
+  }, [carts]);
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_active', activeCartId);
+  }, [activeCartId]);
+
   const activeCart = carts.find(c => c.id === activeCartId)!;
   const cartItems = activeCart.items;
   const discount = activeCart.discount;
   const paymentMethod = activeCart.paymentMethod;
   const notes = activeCart.notes;
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2500);
+  };
 
   const addCart = () => {
     const newId = String(Date.now());
@@ -129,7 +147,7 @@ export default function NewSale() {
   };
 
   const addGenericProduct = () => {
-    if (!genericName.trim() || genericPrice <= 0) {
+    if (!genericName.trim() || !genericPrice || genericPrice <= 0) {
       setError('Nombre y precio válidos requeridos');
       setTimeout(() => setError(''), 3000);
       return;
@@ -170,7 +188,7 @@ export default function NewSale() {
     }));
     setGenericModalOpen(false);
     setGenericName('');
-    setGenericPrice(0);
+    setGenericPrice('');
   };
 
   const updateQty = (id: string, delta: number) => {
@@ -206,7 +224,6 @@ export default function NewSale() {
 
     const saleNumber = genSaleNumber();
 
-    // Separar items reales (con ID) y genéricos (sin ID)
     const realItems = cartItems
       .filter(item => !item.product.id.startsWith('generic-'))
       .map(item => ({
@@ -218,7 +235,6 @@ export default function NewSale() {
 
     const genericItems = cartItems.filter(item => item.product.id.startsWith('generic-'));
 
-    // Construir nota con productos genéricos
     let finalNotes = notes || '';
     if (genericItems.length > 0) {
       const genericList = genericItems
@@ -227,11 +243,10 @@ export default function NewSale() {
       finalNotes = finalNotes ? `${finalNotes} | Genéricos: ${genericList}` : `Genéricos: ${genericList}`;
     }
 
-    // Llamar al procedimiento con solo productos reales, pero el total incluye todo
     const { data: saleId, error: err } = await supabase.rpc('process_sale', {
       p_sale_number: saleNumber,
       p_items: realItems,
-      p_total: total, // este total incluye genéricos
+      p_total: total,
       p_discount: discount,
       p_payment_method: paymentMethod,
       p_notes: finalNotes || null,
@@ -246,7 +261,6 @@ export default function NewSale() {
 
     await logAudit(profile.id, 'SALE', 'sales', saleId, null, { sale_number: saleNumber, total });
 
-    // Notificar stock bajo para productos reales
     for (const item of cartItems) {
       if (item.product.id.startsWith('generic-')) continue;
       const { data: updatedProd } = await supabase
@@ -259,10 +273,29 @@ export default function NewSale() {
       }
     }
 
-    // Limpiar carrito activo
-    clearCart(activeCartId);
-    setSuccess(true);
+    if (activeCartId === '1') {
+      clearCart('1');
+    } else {
+      const newCarts = carts.filter(c => c.id !== activeCartId);
+      setCarts(newCarts);
+      if (newCarts.length > 0) {
+        setActiveCartId(newCarts[0].id);
+      } else {
+        const freshCart = { id: '1', name: 'Cliente 1', items: [], discount: 0, paymentMethod: 'efectivo' as PaymentMethod, notes: '' };
+        setCarts([freshCart]);
+        setActiveCartId('1');
+      }
+    }
+
+    const { data: freshProducts } = await supabase
+      .from('products')
+      .select('*, categories(name)')
+      .eq('status', 'active')
+      .order('name');
+    setProducts(freshProducts ?? []);
+
     setSaving(false);
+    showToast(`Venta ${saleNumber} registrada por ${fmt(total)}`, 'success');
   };
 
   const fmt = (n: number) =>
@@ -281,93 +314,101 @@ export default function NewSale() {
     searchRef.current?.focus();
   }, []);
 
-  const filtered = products.filter((p) =>
-    [p.name, p.barcode].some((v) => v?.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  const handleBarcodeScan = (code: string) => {
-    const product = products.find((p) => p.barcode === code);
-    if (product) {
-      addToCart(product);
-    } else {
-      setError(`No se encontró producto con código: ${code}`);
-      setTimeout(() => setError(''), 3000);
+  const filtered = products.filter((p) => {
+    const trimmed = search.trim();
+    const isBarcode = /^\d{7,}$/.test(trimmed);
+    if (isBarcode) {
+      return true;
     }
-    setScannerOpen(false);
-  };
+    return [p.name, p.barcode].some((v) => v?.toLowerCase().includes(trimmed.toLowerCase()));
+  });
 
-  if (success) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '5rem 0' }}>
-        <div style={{ width: '4rem', height: '4rem', borderRadius: '9999px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#d1fae5', marginBottom: '1rem' }}>
-          <CheckCircle style={{ width: '2rem', height: '2rem', color: '#059669' }} />
-        </div>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>¡Venta registrada!</h2>
-        <p style={{ marginTop: '0.25rem', marginBottom: '1.5rem', color: '#64748b' }}>La transacción fue procesada exitosamente.</p>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            onClick={() => setSuccess(false)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              background: '#0b3b4c',
-              color: '#ffffff',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 500,
-              fontSize: '0.875rem',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
-          >
-            <Plus style={{ width: '1rem', height: '1rem' }} /> Nueva venta
-          </button>
-          <button
-            onClick={() => navigate('/ventas')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              background: '#f1f5f9',
-              color: '#334155',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 500,
-              fontSize: '0.875rem',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
-          >
-            Ver historial
-          </button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      const isInput = active?.tagName === 'INPUT' || active?.tagName === 'TEXTAREA';
+
+      if (e.key === 'Enter' && active === searchRef.current) {
+        e.preventDefault();
+        const trimmed = search.trim();
+        if (!trimmed) return;
+
+        const isBarcode = /^\d{7,}$/.test(trimmed);
+
+        if (isBarcode) {
+          const exactProduct = products.find(p => p.barcode === trimmed);
+          if (exactProduct) {
+            addToCart(exactProduct);
+          } else {
+            setError(`No se encontró producto con código: ${trimmed}`);
+            setTimeout(() => setError(''), 3000);
+          }
+          return;
+        }
+
+        if (filtered.length > 0) {
+          addToCart(filtered[0]);
+          setSearch('');
+        } else {
+          setError('No se encontró ningún producto con ese nombre');
+          setTimeout(() => setError(''), 3000);
+        }
+        return;
+      }
+
+      if (isInput) return;
+
+      if (e.key === 'g' || e.key === 'G') {
+        setGenericModalOpen(true);
+        e.preventDefault();
+      } else if (e.key === 'n' || e.key === 'N') {
+        addCart();
+        e.preventDefault();
+      } else if (e.key === 'c' || e.key === 'C') {
+        handleSale();
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [filtered, products, addToCart, addCart, handleSale, search]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', height: '100%' }}>
-      {/* Header */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          padding: '0.75rem 1.5rem',
+          borderRadius: 'var(--radius-md)',
+          backgroundColor: toast.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-error-bg)',
+          color: toast.type === 'success' ? 'var(--color-success-text)' : 'var(--color-error-text)',
+          border: '1px solid var(--color-card-border)',
+          boxShadow: 'var(--shadow-lg)',
+          zIndex: 100,
+          animation: 'fadeIn 0.2s ease',
+          fontSize: '0.875rem',
+        }}>
+          {toast.message}
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Nueva venta</h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Busca productos o agrega genéricos (jamón, chorizo, etc.)</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>Nueva venta</h1>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
+            Busca productos o agrega genéricos (Atajos: Enter, G, N, C)
+          </p>
         </div>
       </div>
 
-      {/* Tabs de carritos con scroll horizontal */}
       <div style={{
         display: 'flex',
         gap: '0.5rem',
         alignItems: 'center',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid var(--color-card-border)',
         paddingBottom: '0.5rem',
         position: 'relative',
       }}>
@@ -378,7 +419,7 @@ export default function NewSale() {
           paddingBottom: '0.25rem',
           flex: 1,
           scrollbarWidth: 'thin',
-          scrollbarColor: '#cbd5e1 transparent',
+          scrollbarColor: 'var(--color-gray-300) transparent',
           WebkitOverflowScrolling: 'touch',
         }}>
           {carts.map((c, index) => {
@@ -396,25 +437,22 @@ export default function NewSale() {
                   gap: '0.4rem',
                   padding: '0.3rem 0.7rem',
                   borderRadius: '0.5rem',
-                  background: isActive ? '#0b3b4c' : '#f1f5f9',
-                  color: isActive ? '#ffffff' : '#334155',
+                  background: isActive ? 'var(--color-primary)' : 'var(--color-gray-100)',
+                  color: isActive ? '#fff' : 'var(--color-gray-700)',
                   cursor: 'pointer',
                   transition: 'background 0.15s',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = '#e2e8f0';
+                  if (!isActive) e.currentTarget.style.background = 'var(--color-gray-200)';
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.background = '#f1f5f9';
+                  if (!isActive) e.currentTarget.style.background = 'var(--color-gray-100)';
                 }}
               >
                 <User style={{ width: '0.75rem', height: '0.75rem', flexShrink: 0 }} />
-                <span style={{
-                  fontSize: '0.8rem',
-                  fontWeight: isActive ? 600 : 500,
-                }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: isActive ? 600 : 500 }}>
                   Cliente {index + 1}
                 </span>
                 <span style={{
@@ -423,11 +461,10 @@ export default function NewSale() {
                   gap: '0.15rem',
                   fontSize: '0.65rem',
                   fontWeight: 500,
-                  background: hasItems ? (isActive ? 'rgba(255,255,255,0.2)' : '#dbeafe') : '#e2e8f0',
-                  color: hasItems ? (isActive ? '#ffffff' : '#0b3b4c') : '#94a3b8',
+                  background: hasItems ? (isActive ? 'rgba(255,255,255,0.2)' : 'var(--color-info-bg)') : 'var(--color-gray-200)',
+                  color: hasItems ? (isActive ? '#fff' : 'var(--color-primary)') : 'var(--color-gray-400)',
                   padding: '0.1rem 0.4rem',
                   borderRadius: '9999px',
-                  transition: 'background 0.15s',
                 }}>
                   <ShoppingCart style={{ width: '0.5rem', height: '0.5rem' }} />
                   {itemCount}
@@ -438,7 +475,7 @@ export default function NewSale() {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: isActive ? '#fecaca' : '#94a3b8',
+                      color: isActive ? '#fecaca' : 'var(--color-gray-400)',
                       cursor: 'pointer',
                       padding: '0.1rem',
                       display: 'flex',
@@ -447,8 +484,8 @@ export default function NewSale() {
                       borderRadius: '0.25rem',
                       marginLeft: '0.1rem',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#dc2626'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = isActive ? '#fecaca' : '#94a3b8'}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-error)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = isActive ? '#fecaca' : 'var(--color-gray-400)'}
                   >
                     <X style={{ width: '0.65rem', height: '0.65rem' }} />
                   </button>
@@ -458,7 +495,6 @@ export default function NewSale() {
           })}
         </div>
 
-        {/* Botón "Nuevo cliente" fijo a la derecha */}
         <button
           onClick={addCart}
           style={{
@@ -467,8 +503,8 @@ export default function NewSale() {
             gap: '0.3rem',
             padding: '0.3rem 0.7rem',
             borderRadius: '0.5rem',
-            background: '#0b3b4c',
-            color: '#ffffff',
+            background: 'var(--color-primary)',
+            color: '#fff',
             border: 'none',
             cursor: 'pointer',
             fontWeight: 500,
@@ -477,21 +513,18 @@ export default function NewSale() {
             flexShrink: 0,
             marginLeft: '0.25rem',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-primary-dark)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-primary)'}
         >
           <Plus style={{ width: '0.9rem', height: '0.9rem' }} /> Nuevo cliente
         </button>
       </div>
 
-      {/* Main layout: 2 columns */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '1.5rem', flex: 1, minHeight: 0 }}>
-        {/* Left: Product search and list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
-          {/* Search bar + botones */}
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-              <ScanBarcode style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+              <ScanBarcode style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: 'var(--color-gray-400)' }} />
               <input
                 ref={searchRef}
                 value={search}
@@ -503,32 +536,12 @@ export default function NewSale() {
               {search && (
                 <button
                   onClick={() => setSearch('')}
-                  style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                  style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-gray-400)', cursor: 'pointer' }}
                 >
                   <X style={{ width: '1rem', height: '1rem' }} />
                 </button>
               )}
             </div>
-            <button
-              onClick={() => setScannerOpen(true)}
-              style={{
-                padding: '0.5rem 0.75rem',
-                borderRadius: '0.5rem',
-                background: '#f1f5f9',
-                color: '#334155',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
-              title="Escanear con cámara"
-            >
-              <Camera style={{ width: '1rem', height: '1rem' }} />
-            </button>
             <button
               onClick={() => setGenericModalOpen(true)}
               style={{
@@ -537,29 +550,21 @@ export default function NewSale() {
                 gap: '0.5rem',
                 padding: '0.5rem 0.75rem',
                 borderRadius: '0.5rem',
-                background: '#dbeafe',
-                color: '#0b3b4c',
+                background: 'var(--color-info-bg)',
+                color: 'var(--color-primary)',
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 500,
                 fontSize: '0.875rem',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#bfdbfe'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#dbeafe'}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-info)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-info-bg)'}
             >
               <PlusCircle style={{ width: '1rem', height: '1rem' }} /> Genérico
             </button>
           </div>
 
-          {scannerOpen && (
-            <BarcodeScanner
-              onScan={handleBarcodeScan}
-              onClose={() => setScannerOpen(false)}
-            />
-          )}
-
-          {/* Product grid */}
           <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem', alignContent: 'start' }}>
             {filtered.slice(0, 50).map((p) => {
               const inCart = cartItems.find((i) => i.product.id === p.id);
@@ -572,50 +577,46 @@ export default function NewSale() {
                   disabled={isOutOfStock}
                   style={{
                     padding: '0.75rem',
-                    border: inCart ? '2px solid #0b3b4c' : '1px solid #edf2f7',
-                    borderRadius: '0.75rem',
-                    background: '#ffffff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    border: inCart ? '2px solid var(--color-primary)' : '1px solid var(--color-card-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    background: 'var(--color-card-bg)',
+                    boxShadow: 'var(--shadow-sm)',
                     textAlign: 'left',
                     cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                     opacity: isOutOfStock ? 0.5 : 1,
-                    transition: 'box-shadow 0.15s, border-color 0.15s',
+                    transition: 'box-shadow 0.15s, border-color 0.15s, background 0.25s ease',
                   }}
                   onMouseEnter={(e) => {
-                    if (!isOutOfStock) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
+                    if (!isOutOfStock) e.currentTarget.style.boxShadow = 'var(--shadow-md)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#1e293b' }}>{p.name}</span>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-gray-800)' }}>{p.name}</span>
                     {inCart && (
-                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0b3b4c', background: '#dbeafe', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-primary)', background: 'var(--color-info-bg)', padding: '0.125rem 0.5rem', borderRadius: '9999px' }}>
                         {inCart.quantity}
                       </span>
                     )}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{(p as { categories?: { name: string } }).categories?.name ?? 'Sin cat.'}</span>
-                    <span style={{ fontSize: '0.7rem', color: isOutOfStock ? '#dc2626' : isLowStock ? '#d97706' : '#64748b', fontWeight: 500 }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>{(p as any).categories?.name ?? 'Sin cat.'}</span>
+                    <span style={{ fontSize: '0.7rem', color: isOutOfStock ? 'var(--color-error)' : isLowStock ? 'var(--color-warning)' : 'var(--color-gray-500)', fontWeight: 500 }}>
                       {p.stock} {p.unit}
                     </span>
                   </div>
-                  <div style={{ marginTop: '0.5rem', fontSize: '1rem', fontWeight: 700, color: '#0b3b4c' }}>
+                  <div style={{ marginTop: '0.5rem', fontSize: '1rem', fontWeight: 700, color: 'var(--color-primary)' }}>
                     {fmt(p.sale_price)}
                   </div>
-                  {isLowStock && (
-                    <div style={{ fontSize: '0.6rem', color: '#d97706', marginTop: '0.25rem' }}>⚠️ Stock bajo</div>
-                  )}
-                  {isOutOfStock && (
-                    <div style={{ fontSize: '0.6rem', color: '#dc2626', marginTop: '0.25rem' }}>Sin stock</div>
-                  )}
+                  {isLowStock && <div style={{ fontSize: '0.6rem', color: 'var(--color-warning)', marginTop: '0.25rem' }}>⚠️ Stock bajo</div>}
+                  {isOutOfStock && <div style={{ fontSize: '0.6rem', color: 'var(--color-error)', marginTop: '0.25rem' }}>Sin stock</div>}
                 </button>
               );
             })}
             {filtered.length === 0 && (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 0', color: '#94a3b8' }}>
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 0', color: 'var(--color-gray-400)' }}>
                 <Package style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                 No se encontraron productos
               </div>
@@ -623,57 +624,54 @@ export default function NewSale() {
           </div>
         </div>
 
-        {/* Right: Cart */}
-        <div style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '1rem', border: '1px solid #edf2f7', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', overflow: 'hidden', height: '100%' }}>
-          {/* Cart header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid #e2e8f0' }}>
-            <ShoppingCart style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }}>{activeCart.name}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--color-card-bg)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-card-border)', boxShadow: 'var(--shadow-md)', overflow: 'hidden', height: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--color-card-border)' }}>
+            <ShoppingCart style={{ width: '1rem', height: '1rem', color: 'var(--color-gray-500)' }} />
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-gray-800)' }}>{activeCart.name}</span>
             {cartItems.length > 0 && (
-              <span style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 500, background: '#dbeafe', color: '#0b3b4c', padding: '0.125rem 0.625rem', borderRadius: '9999px' }}>
+              <span style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 500, background: 'var(--color-info-bg)', color: 'var(--color-primary)', padding: '0.125rem 0.625rem', borderRadius: '9999px' }}>
                 {cartItems.reduce((s, i) => s + i.quantity, 0)} items
               </span>
             )}
             {cartItems.length > 0 && (
               <button
                 onClick={() => clearCart(activeCartId)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.7rem' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#dc2626'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                style={{ background: 'none', border: 'none', color: 'var(--color-gray-400)', cursor: 'pointer', fontSize: '0.7rem', transition: 'color 0.15s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-error)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-400)'}
               >
                 Limpiar
               </button>
             )}
           </div>
 
-          {/* Cart items */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {error && (
-              <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', fontSize: '0.875rem' }}>
+              <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'var(--color-error-bg)', border: '1px solid var(--color-error)', color: 'var(--color-error-text)', fontSize: '0.875rem' }}>
                 {error}
               </div>
             )}
             {cartItems.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem 0', color: '#94a3b8' }}>
+              <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--color-gray-400)' }}>
                 <ShoppingCart style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                 <p style={{ fontSize: '0.875rem' }}>Carrito vacío</p>
                 <p style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Agrega productos o usa "Genérico"</p>
               </div>
             ) : (
               cartItems.map((item) => (
-                <div key={item.product.id} style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <div key={item.product.id} style={{ padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--color-gray-50)', border: '1px solid var(--color-card-border)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#1e293b' }}>{item.product.name}</span>
+                      <span style={{ fontWeight: 500, fontSize: '0.875rem', color: 'var(--color-gray-800)' }}>{item.product.name}</span>
                       {item.product.id.startsWith('generic-') && (
-                        <span style={{ fontSize: '0.6rem', color: '#64748b', marginLeft: '0.5rem', background: '#dbeafe', padding: '0.125rem 0.375rem', borderRadius: '9999px' }}>Genérico</span>
+                        <span style={{ fontSize: '0.6rem', color: 'var(--color-gray-500)', marginLeft: '0.5rem', background: 'var(--color-info-bg)', padding: '0.125rem 0.375rem', borderRadius: '9999px' }}>Genérico</span>
                       )}
                     </div>
                     <button
                       onClick={() => removeItem(item.product.id)}
-                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem' }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = '#dc2626'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-gray-400)', cursor: 'pointer', padding: '0.25rem', transition: 'color 0.15s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-error)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-400)'}
                     >
                       <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
                     </button>
@@ -682,48 +680,48 @@ export default function NewSale() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <button
                         onClick={() => updateQty(item.product.id, -1)}
-                        style={{ width: '1.5rem', height: '1.5rem', borderRadius: '0.375rem', background: '#e2e8f0', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}
+                        style={{ width: '1.5rem', height: '1.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--color-gray-200)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-gray-600)' }}
                       >
                         <Minus style={{ width: '0.75rem', height: '0.75rem' }} />
                       </button>
-                      <span style={{ width: '1.5rem', textAlign: 'center', fontSize: '0.875rem', fontWeight: 500, color: '#1e293b' }}>{item.quantity}</span>
+                      <span style={{ width: '1.5rem', textAlign: 'center', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-gray-800)' }}>{item.quantity}</span>
                       <button
                         onClick={() => updateQty(item.product.id, 1)}
-                        style={{ width: '1.5rem', height: '1.5rem', borderRadius: '0.375rem', background: '#e2e8f0', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}
+                        style={{ width: '1.5rem', height: '1.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--color-gray-200)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-gray-600)' }}
                       >
                         <Plus style={{ width: '0.75rem', height: '0.75rem' }} />
                       </button>
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>× {fmt(item.unit_price)}</span>
-                    <span style={{ marginLeft: 'auto', fontWeight: 600, fontSize: '0.875rem', color: '#0b3b4c' }}>{fmt(item.subtotal)}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>× {fmt(item.unit_price)}</span>
+                    <span style={{ marginLeft: 'auto', fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-primary)' }}>{fmt(item.subtotal)}</span>
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          {/* Cart footer */}
-          <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#64748b' }}>
+          <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--color-card-border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
               <span>Subtotal</span>
               <span>{fmt(subtotal)}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Descuento</span>
+              <span style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>Descuento</span>
               <input
                 type="number"
-                value={discount}
+                value={discount || ''}
                 onChange={(e) => {
-                  const val = Math.max(0, parseFloat(e.target.value) || 0);
-                  updateCart(activeCartId, { discount: val });
+                  const val = parseFloat(e.target.value);
+                  updateCart(activeCartId, { discount: isNaN(val) ? 0 : Math.max(0, val) });
                 }}
                 min="0"
-                style={{ width: '5rem', padding: '0.25rem 0.375rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0', fontSize: '0.875rem', background: '#ffffff' }}
+                style={{ width: '5rem', padding: '0.25rem 0.375rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-card-border)', fontSize: '0.875rem', background: 'var(--color-card-bg)', color: 'var(--color-gray-800)' }}
+                placeholder="0"
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>
-              <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#1e293b' }}>Total</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0b3b4c' }}>{fmt(total)}</span>
+              <span style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>Total</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>{fmt(total)}</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
@@ -738,24 +736,34 @@ export default function NewSale() {
                     alignItems: 'center',
                     gap: '0.25rem',
                     padding: '0.5rem',
-                    borderRadius: '0.5rem',
-                    border: paymentMethod === value ? '2px solid #0b3b4c' : '1px solid #e2e8f0',
-                    background: paymentMethod === value ? '#f8fafc' : '#ffffff',
+                    borderRadius: 'var(--radius-md)',
+                    border: paymentMethod === value ? '2px solid var(--color-primary)' : '1px solid var(--color-card-border)',
+                    background: paymentMethod === value ? 'var(--color-gray-50)' : 'var(--color-card-bg)',
                     fontSize: '0.7rem',
                     fontWeight: 500,
-                    color: methodDisabled ? '#94a3b8' : '#1e293b',
+                    color: methodDisabled ? 'var(--color-gray-400)' : 'var(--color-gray-800)',
                     cursor: methodDisabled ? 'not-allowed' : 'pointer',
                     opacity: methodDisabled ? 0.6 : 1,
                     transition: 'border-color 0.15s, background 0.15s',
                     position: 'relative',
                   }}
+                  onMouseEnter={(e) => {
+                    if (!methodDisabled && paymentMethod !== value) {
+                      e.currentTarget.style.background = 'var(--color-gray-100)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!methodDisabled && paymentMethod !== value) {
+                      e.currentTarget.style.background = 'var(--color-card-bg)';
+                    }
+                  }}
                 >
                   {methodDisabled && (
-                    <Lock style={{ width: '0.75rem', height: '0.75rem', position: 'absolute', top: '0.25rem', right: '0.25rem', color: '#94a3b8' }} />
+                    <Lock style={{ width: '0.75rem', height: '0.75rem', position: 'absolute', top: '0.25rem', right: '0.25rem', color: 'var(--color-gray-400)' }} />
                   )}
                   <Icon style={{ width: '1rem', height: '1rem' }} />
                   <span>{label}</span>
-                  {methodDisabled && <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>Próximamente</span>}
+                  {methodDisabled && <span style={{ fontSize: '0.6rem', color: 'var(--color-gray-400)' }}>Próximamente</span>}
                 </button>
               ))}
             </div>
@@ -764,7 +772,7 @@ export default function NewSale() {
               value={notes}
               onChange={(e) => updateCart(activeCartId, { notes: e.target.value })}
               placeholder="Notas (opcional)"
-              style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: '0.875rem', resize: 'vertical', minHeight: '2.5rem', background: '#f8fafc' }}
+              style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-card-border)', fontSize: '0.875rem', resize: 'vertical', minHeight: '2.5rem', background: 'var(--color-gray-50)', color: 'var(--color-gray-800)' }}
             />
 
             <button
@@ -776,8 +784,8 @@ export default function NewSale() {
                 justifyContent: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 0',
-                borderRadius: '0.5rem',
-                background: '#0b3b4c',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-primary)',
                 color: '#ffffff',
                 border: 'none',
                 fontWeight: 600,
@@ -787,10 +795,10 @@ export default function NewSale() {
                 transition: 'background 0.15s',
               }}
               onMouseEnter={(e) => {
-                if (!(cartItems.length === 0 || saving)) e.currentTarget.style.background = '#0a2f3d';
+                if (!(cartItems.length === 0 || saving)) e.currentTarget.style.background = 'var(--color-primary-dark)';
               }}
               onMouseLeave={(e) => {
-                if (!(cartItems.length === 0 || saving)) e.currentTarget.style.background = '#0b3b4c';
+                if (!(cartItems.length === 0 || saving)) e.currentTarget.style.background = 'var(--color-primary)';
               }}
             >
               {saving ? <Loader2 style={{ width: '1.25rem', height: '1.25rem', animation: 'spin 1s linear infinite' }} /> : <CheckCircle style={{ width: '1.25rem', height: '1.25rem' }} />}
@@ -800,7 +808,6 @@ export default function NewSale() {
         </div>
       </div>
 
-      {/* Modal para producto genérico */}
       <Modal open={genericModalOpen} onClose={() => setGenericModalOpen(false)} title="Agregar producto genérico" size="md">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
@@ -812,15 +819,15 @@ export default function NewSale() {
               className="input"
               autoFocus
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && genericPrice > 0) addGenericProduct();
+                if (e.key === 'Enter' && genericPrice && genericPrice > 0) addGenericProduct();
               }}
             />
           </div>
           <div>
             <label className="label">Precio</label>
             <input
-              value={genericPrice || ''}
-              onChange={(e) => setGenericPrice(parseFloat(e.target.value) || 0)}
+              value={genericPrice}
+              onChange={(e) => setGenericPrice(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
               type="number"
               step="0.01"
               min="0"
@@ -837,17 +844,17 @@ export default function NewSale() {
               style={{
                 flex: 1,
                 padding: '0.5rem 0',
-                borderRadius: '0.5rem',
-                background: '#f1f5f9',
-                color: '#334155',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-gray-100)',
+                color: 'var(--color-gray-700)',
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 500,
                 fontSize: '0.875rem',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-gray-200)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-gray-100)'}
             >
               Cancelar
             </button>
@@ -856,17 +863,17 @@ export default function NewSale() {
               style={{
                 flex: 1,
                 padding: '0.5rem 0',
-                borderRadius: '0.5rem',
-                background: '#0b3b4c',
-                color: '#ffffff',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-primary)',
+                color: '#fff',
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 500,
                 fontSize: '0.875rem',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-primary-dark)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-primary)'}
             >
               Agregar al carrito
             </button>

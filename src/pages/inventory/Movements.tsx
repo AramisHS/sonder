@@ -17,20 +17,34 @@ export default function Movements() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().slice(0, 10);
+  });
 
   const fetchMovements = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('inventory_movements').select('*').order('created_at', { ascending: false }).limit(1000);
+      const date = new Date(selectedDate + 'T00:00:00');
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      
+      const startISO = start.toISOString();
+      const endISO = end.toISOString();
+
+      let query = supabase
+        .from('inventory_movements')
+        .select('*')
+        .gte('created_at', startISO)
+        .lte('created_at', endISO)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
       if (filterType !== 'all') query = query.eq('movement_type', filterType);
-      if (dateFrom) query = query.gte('created_at', new Date(dateFrom).toISOString());
-      if (dateTo) {
-        const end = new Date(dateTo);
-        end.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', end.toISOString());
-      }
+
       const { data: movementsData } = await query;
       const { data: productsData } = await supabase.from('products').select('id, name, unit');
       const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
@@ -51,7 +65,9 @@ export default function Movements() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchMovements(); }, [filterType, dateFrom, dateTo]);
+  useEffect(() => {
+    fetchMovements();
+  }, [filterType, selectedDate]);
 
   const filtered = movements.filter((m) =>
     (m.products as Product | null)?.name?.toLowerCase().includes(search.toLowerCase())
@@ -63,24 +79,43 @@ export default function Movements() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
       <div style={{ flexShrink: 0 }}>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Historial de movimientos</h1>
-        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{filtered.length} registros</p>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>Historial de movimientos</h1>
+        <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>{filtered.length} registros</p>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0.75rem', flexShrink: 0 }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-          <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar producto..." className="input" style={{ paddingLeft: '2.25rem' }} />
+          <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: 'var(--color-gray-400)' }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar producto..."
+            className="input"
+            style={{ paddingLeft: '2.25rem' }}
+          />
         </div>
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="input" style={{ width: 'auto', minWidth: '160px' }}>
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="input"
+          style={{ width: 'auto', minWidth: '160px' }}
+        >
           <option value="all">Todos los tipos</option>
           <option value="entry">Entradas</option>
           <option value="sale">Ventas</option>
           <option value="adjustment">Ajustes</option>
           <option value="return">Devoluciones</option>
         </select>
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="input" style={{ width: 'auto', minWidth: '140px' }} />
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="input" style={{ width: 'auto', minWidth: '140px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-gray-500)' }}>Fecha:</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="input"
+            style={{ width: 'auto', minWidth: '160px' }}
+          />
+        </div>
       </div>
 
       <div
@@ -90,15 +125,16 @@ export default function Movements() {
           flex: '0 1 auto',
           maxHeight: '100%',
           minHeight: 0,
-          border: '1px solid #e2e8f0',
-          borderRadius: '0.75rem',
+          border: '1px solid var(--color-card-border)',
+          borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
-          background: '#ffffff',
+          background: 'var(--color-card-bg)',
+          transition: 'background 0.25s ease, border-color 0.25s ease',
         }}
       >
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: 'var(--color-primary)' }} />
           </div>
         ) : (
           <div
@@ -111,19 +147,19 @@ export default function Movements() {
             <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Fecha</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Tipo</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Producto</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Cantidad</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Stock anterior</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Stock nuevo</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Notas</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Usuario</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Fecha</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Tipo</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Producto</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Cantidad</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Stock anterior</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Stock nuevo</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Notas</th>
+                  <th style={{ position: 'sticky', top: 0, background: 'var(--color-table-header)', zIndex: 1, transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease' }}>Usuario</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedItems.length === 0 ? (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem 0', color: 'var(--color-gray-400)' }}>
                     <ArrowLeftRight style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin movimientos
                   </td></tr>
@@ -133,21 +169,21 @@ export default function Movements() {
                     const isPositive = m.quantity > 0;
                     return (
                       <tr key={m.id} style={{ height: '56px' }}>
-                        <td style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', color: '#64748b' }}>
+                        <td style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
                           {new Date(m.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </td>
                         <td><span className={`badge ${t.color}`}>{t.label}</span></td>
-                        <td style={{ fontWeight: 500 }}>{(m.products as Product | null)?.name ?? '—'}</td>
+                        <td style={{ fontWeight: 500, color: 'var(--color-gray-800)' }}>{(m.products as Product | null)?.name ?? '—'}</td>
                         <td>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600, color: isPositive ? '#0b3b4c' : '#dc2626' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600, color: isPositive ? 'var(--color-primary)' : 'var(--color-error)' }}>
                             {isPositive ? <TrendingUp style={{ width: '0.75rem', height: '0.75rem' }} /> : <TrendingDown style={{ width: '0.75rem', height: '0.75rem' }} />}
                             {isPositive ? '+' : ''}{m.quantity} {(m.products as Product | null)?.unit}
                           </span>
                         </td>
-                        <td style={{ color: '#64748b' }}>{m.stock_before}</td>
-                        <td style={{ fontWeight: 600 }}>{m.stock_after}</td>
-                        <td style={{ maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.75rem', color: '#64748b' }}>{m.notes ?? '—'}</td>
-                        <td style={{ fontSize: '0.75rem', color: '#64748b' }}>{(m.profiles as Profile | null)?.full_name ?? '—'}</td>
+                        <td style={{ color: 'var(--color-gray-500)' }}>{m.stock_before}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--color-gray-800)' }}>{m.stock_after}</td>
+                        <td style={{ maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>{m.notes ?? '—'}</td>
+                        <td style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>{(m.profiles as Profile | null)?.full_name ?? '—'}</td>
                       </tr>
                     );
                   })

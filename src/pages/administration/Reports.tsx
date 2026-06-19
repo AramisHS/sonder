@@ -105,25 +105,30 @@ export default function Reports() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '16rem' }}>
-        <Loader2 style={{ width: '2rem', height: '2rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+        <Loader2 style={{ width: '2rem', height: '2rem', animation: 'spin 1s linear infinite', color: 'var(--color-primary)' }} />
       </div>
     );
   }
 
   const kpis = [
     { icon: Package, label: 'Valor de compra (inventario)', value: fmt(inventorySummary.totalValue), bg: '#0b3b4c' },
-    { icon: DollarSign, label: 'Valor de venta (inventario)', value: fmt(inventorySummary.totalSaleValue), bg: '#059669' },
-    { icon: ShoppingBag, label: 'Unidades en stock', value: inventorySummary.totalItems.toFixed(0), bg: '#b8860b' },
     { icon: TrendingUp, label: 'Productos stock bajo', value: String(inventorySummary.lowStock), bg: inventorySummary.lowStock > 0 ? '#d97706' : '#94a3b8' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '1.5rem', 
+      width: '100%',
+      minHeight: 'calc(100vh - 8rem)',
+      paddingBottom: '2rem',
+    }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Reportes</h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Análisis de ventas e inventario</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>Reportes</h1>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>Análisis de ventas e inventario</p>
         </div>
         <button
           onClick={handlePDF}
@@ -132,114 +137,209 @@ export default function Reports() {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.5rem 1rem',
-            borderRadius: '0.5rem',
-            background: '#f1f5f9',
-            color: '#334155',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--color-gray-100)',
+            color: 'var(--color-gray-700)',
             border: 'none',
             cursor: 'pointer',
             fontWeight: 500,
             fontSize: '0.875rem',
-            transition: 'background 0.15s',
+            transition: 'background 0.15s, color 0.15s',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--color-gray-200)';
+            e.currentTarget.style.color = 'var(--color-gray-900)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--color-gray-100)';
+            e.currentTarget.style.color = 'var(--color-gray-700)';
+          }}
         >
           <FileText style={{ width: '1rem', height: '1rem' }} /> PDF
         </button>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards (solo 2) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', width: '100%' }}>
         {kpis.map((kpi) => (
-          <div key={kpi.label} style={{ padding: '1.25rem', border: '1px solid #edf2f7', borderRadius: '1rem', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', marginBottom: '0.75rem', background: kpi.bg }}>
+          <div key={kpi.label} style={{ 
+            padding: '1.25rem', 
+            border: '1px solid var(--color-card-border)', 
+            borderRadius: 'var(--radius-xl)', 
+            background: 'var(--color-card-bg)', 
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'background 0.25s ease, border-color 0.25s ease',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '2.25rem', height: '2.25rem', borderRadius: 'var(--radius-md)', marginBottom: '0.75rem', background: kpi.bg }}>
               <kpi.icon style={{ width: '1rem', height: '1rem', color: '#ffffff' }} />
             </div>
-            <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>{kpi.value}</p>
-            <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', lineHeight: 1.3, color: '#64748b' }}>{kpi.label}</p>
+            <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>{kpi.value}</p>
+            <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', lineHeight: 1.3, color: 'var(--color-gray-500)' }}>{kpi.label}</p>
           </div>
         ))}
       </div>
 
       {/* Monthly Sales Chart */}
-      <div style={{ padding: '1.25rem', border: '1px solid #edf2f7', borderRadius: '1rem', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-        <h2 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: '#1e293b' }}>Ventas mensuales — últimos 12 meses</h2>
+      <div style={{ 
+        padding: '1.25rem', 
+        border: '1px solid var(--color-card-border)', 
+        borderRadius: 'var(--radius-xl)', 
+        background: 'var(--color-card-bg)', 
+        boxShadow: 'var(--shadow-sm)',
+        transition: 'background 0.25s ease, border-color 0.25s ease',
+      }}>
+        <h2 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--color-gray-800)' }}>Ventas mensuales — últimos 12 meses</h2>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={monthly} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-            <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
+            <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--color-gray-400)' }} />
+            <YAxis tick={{ fontSize: 10, fill: 'var(--color-gray-400)' }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
             <Tooltip
               formatter={(value) => [fmt(Number(value ?? 0)), 'Ventas']}
-              contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#1e293b' }}
+              contentStyle={{ 
+                backgroundColor: 'var(--color-card-bg)', 
+                border: '1px solid var(--color-card-border)', 
+                borderRadius: 'var(--radius-md)', 
+                color: 'var(--color-gray-800)',
+              }}
             />
-            <Bar dataKey="total" fill="#0b3b4c" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', width: '100%' }}>
         {/* Payment Methods */}
-        <div style={{ padding: '1.25rem', border: '1px solid #edf2f7', borderRadius: '1rem', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: '#1e293b' }}>Métodos de pago</h2>
+        <div style={{ 
+          padding: '1.25rem', 
+          border: '1px solid var(--color-card-border)', 
+          borderRadius: 'var(--radius-xl)', 
+          background: 'var(--color-card-bg)', 
+          boxShadow: 'var(--shadow-sm)',
+          transition: 'background 0.25s ease, border-color 0.25s ease',
+        }}>
+          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--color-gray-800)' }}>Métodos de pago</h2>
           {paymentData.length === 0 ? (
-            <p style={{ fontSize: '0.875rem', textAlign: 'center', padding: '2rem 0', color: '#94a3b8' }}>Sin datos</p>
+            <p style={{ fontSize: '0.875rem', textAlign: 'center', padding: '2rem 0', color: 'var(--color-gray-400)' }}>Sin datos</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={paymentData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
                   {paymentData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(v) => fmt(Number(v ?? 0))} contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#1e293b' }} />
+                <Tooltip 
+                  formatter={(v) => fmt(Number(v ?? 0))} 
+                  contentStyle={{ 
+                    backgroundColor: 'var(--color-card-bg)', 
+                    border: '1px solid var(--color-card-border)', 
+                    borderRadius: 'var(--radius-md)', 
+                    color: 'var(--color-gray-800)',
+                  }} 
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
         </div>
 
         {/* Top Products */}
-        <div style={{ padding: '1.25rem', border: '1px solid #edf2f7', borderRadius: '1rem', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: '#1e293b' }}>Top 10 productos por ingresos</h2>
+        <div style={{ 
+          padding: '1.25rem', 
+          border: '1px solid var(--color-card-border)', 
+          borderRadius: 'var(--radius-xl)', 
+          background: 'var(--color-card-bg)', 
+          boxShadow: 'var(--shadow-sm)',
+          transition: 'background 0.25s ease, border-color 0.25s ease',
+        }}>
+          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--color-gray-800)' }}>Top 10 productos por ingresos</h2>
           {topProducts.length === 0 ? (
-            <p style={{ fontSize: '0.875rem', textAlign: 'center', padding: '2rem 0', color: '#94a3b8' }}>Sin datos de ventas</p>
+            <p style={{ fontSize: '0.875rem', textAlign: 'center', padding: '2rem 0', color: 'var(--color-gray-400)' }}>Sin datos de ventas</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={topProducts} layout="vertical" margin={{ left: 0, right: 8, top: 0, bottom: 0 }}>
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} width={80} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--color-gray-400)' }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: 'var(--color-gray-400)' }} width={80} />
                 <Tooltip
                   formatter={(value) => [fmt(Number(value ?? 0)), 'Ingresos']}
-                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#1e293b' }}
+                  contentStyle={{ 
+                    backgroundColor: 'var(--color-card-bg)', 
+                    border: '1px solid var(--color-card-border)', 
+                    borderRadius: 'var(--radius-md)', 
+                    color: 'var(--color-gray-800)',
+                  }}
                 />
-                <Bar dataKey="revenue" fill="#059669" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="revenue" fill="var(--color-success)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
       </div>
 
-      {/* Top Products Detail Table */}
+      {/* Top Products Detail Table - Más grande (7 filas visibles) con scroll interno */}
       {topProducts.length > 0 && (
-        <div style={{ border: '1px solid #edf2f7', borderRadius: '1rem', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0' }}>
-            <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }}>Detalle — top productos vendidos</h2>
+        <div style={{ 
+          border: '1px solid var(--color-card-border)', 
+          borderRadius: 'var(--radius-xl)', 
+          background: 'var(--color-card-bg)', 
+          boxShadow: 'var(--shadow-sm)', 
+          overflow: 'hidden',
+          transition: 'background 0.25s ease, border-color 0.25s ease',
+        }}>
+          <div style={{ padding: '0.6rem 1rem', borderBottom: '1px solid var(--color-card-border)' }}>
+            <h2 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-gray-800)' }}>Detalle — top productos vendidos</h2>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', textAlign: 'left', fontSize: '0.875rem', borderCollapse: 'collapse' }}>
-              <thead>
+          <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '280px' }}>
+            <table style={{ width: '100%', textAlign: 'left', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                 <tr>
-                  <th style={{ padding: '0.75rem 1rem', fontWeight: 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>#</th>
-                  <th style={{ padding: '0.75rem 1rem', fontWeight: 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>Producto</th>
-                  <th style={{ padding: '0.75rem 1rem', fontWeight: 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>Unidades vendidas</th>
-                  <th style={{ padding: '0.75rem 1rem', fontWeight: 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>Ingresos totales</th>
+                  <th style={{ 
+                    padding: '0.5rem 0.75rem', 
+                    fontWeight: 500, 
+                    fontSize: '0.7rem', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em', 
+                    color: 'var(--color-gray-500)', 
+                    background: 'var(--color-table-header)', 
+                    borderBottom: '1px solid var(--color-card-border)',
+                  }}>#</th>
+                  <th style={{ 
+                    padding: '0.5rem 0.75rem', 
+                    fontWeight: 500, 
+                    fontSize: '0.7rem', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em', 
+                    color: 'var(--color-gray-500)', 
+                    background: 'var(--color-table-header)', 
+                    borderBottom: '1px solid var(--color-card-border)',
+                  }}>Producto</th>
+                  <th style={{ 
+                    padding: '0.5rem 0.75rem', 
+                    fontWeight: 500, 
+                    fontSize: '0.7rem', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em', 
+                    color: 'var(--color-gray-500)', 
+                    background: 'var(--color-table-header)', 
+                    borderBottom: '1px solid var(--color-card-border)',
+                  }}>Unidades</th>
+                  <th style={{ 
+                    padding: '0.5rem 0.75rem', 
+                    fontWeight: 500, 
+                    fontSize: '0.7rem', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em', 
+                    color: 'var(--color-gray-500)', 
+                    background: 'var(--color-table-header)', 
+                    borderBottom: '1px solid var(--color-card-border)',
+                  }}>Ingresos</th>
                 </tr>
               </thead>
               <tbody>
                 {topProducts.map((p, i) => (
                   <tr key={p.name}>
-                    <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>{i + 1}</td>
-                    <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', fontWeight: 500 }}>{p.name}</td>
-                    <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0' }}>{p.qty.toFixed(2)}</td>
-                    <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', fontWeight: 600, color: '#059669' }}>{fmt(p.revenue)}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--color-card-border)', color: 'var(--color-gray-500)' }}>{i + 1}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--color-card-border)', fontWeight: 500, color: 'var(--color-gray-800)' }}>{p.name}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--color-card-border)', color: 'var(--color-gray-800)' }}>{p.qty.toFixed(2)}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--color-card-border)', fontWeight: 600, color: 'var(--color-success-text)' }}>{fmt(p.revenue)}</td>
                   </tr>
                 ))}
               </tbody>

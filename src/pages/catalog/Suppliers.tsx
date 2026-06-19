@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Search, Truck, Loader2, Mail, Phone } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Truck, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -90,22 +90,69 @@ export default function Suppliers() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', flexShrink: 0 }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100%', 
+      gap: '1rem',
+      transition: 'background 0.25s ease',
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        gap: '1rem', 
+        flexWrap: 'wrap', 
+        flexShrink: 0 
+      }}>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Proveedores</h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{filtered.length} proveedores</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>
+            Proveedores
+          </h1>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
+            {filtered.length} proveedores
+          </p>
         </div>
         {isAdmin && (
-          <button onClick={openCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>
+          <button 
+            onClick={openCreate} 
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '0.5rem', 
+              background: 'var(--color-primary)', 
+              color: '#fff', 
+              border: 'none', 
+              cursor: 'pointer', 
+              fontWeight: 500, 
+              fontSize: '0.875rem',
+              transition: 'background 0.15s',
+            }}
+          >
             <Plus style={{ width: '1rem', height: '1rem' }} /> Nuevo proveedor
           </button>
         )}
       </div>
 
       <div style={{ position: 'relative', flexShrink: 0 }}>
-        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar proveedor..." className="input" style={{ paddingLeft: '2.25rem' }} />
+        <Search style={{ 
+          position: 'absolute', 
+          left: '0.75rem', 
+          top: '50%', 
+          transform: 'translateY(-50%)', 
+          width: '1rem', 
+          height: '1rem', 
+          color: 'var(--color-gray-400)' 
+        }} />
+        <input 
+          value={search} 
+          onChange={(e) => setSearch(e.target.value)} 
+          placeholder="Buscar proveedor..." 
+          className="input" 
+          style={{ paddingLeft: '2.25rem' }} 
+        />
       </div>
 
       <div
@@ -115,15 +162,16 @@ export default function Suppliers() {
           flex: '0 1 auto',
           maxHeight: '100%',
           minHeight: 0,
-          border: '1px solid #e2e8f0',
-          borderRadius: '0.75rem',
+          border: '1px solid var(--color-card-border)',
+          borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
-          background: '#ffffff',
+          background: 'var(--color-card-bg)',
+          transition: 'background 0.25s ease, border-color 0.25s ease',
         }}
       >
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+            <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: 'var(--color-primary)' }} />
           </div>
         ) : (
           <div
@@ -136,27 +184,92 @@ export default function Suppliers() {
             <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Nombre</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Contacto</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Email</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Teléfono</th>
-                  <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>Estado</th>
-                  {isAdmin && <th style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1, textAlign: 'right' }}>Acciones</th>}
+                  <th style={{ 
+                    position: 'sticky', 
+                    top: 0, 
+                    background: 'var(--color-table-header)', 
+                    zIndex: 1,
+                    transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease',
+                  }}>
+                    Nombre
+                  </th>
+                  <th style={{ 
+                    position: 'sticky', 
+                    top: 0, 
+                    background: 'var(--color-table-header)', 
+                    zIndex: 1,
+                    transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease',
+                  }}>
+                    Contacto
+                  </th>
+                  <th style={{ 
+                    position: 'sticky', 
+                    top: 0, 
+                    background: 'var(--color-table-header)', 
+                    zIndex: 1,
+                    transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease',
+                  }}>
+                    Email
+                  </th>
+                  <th style={{ 
+                    position: 'sticky', 
+                    top: 0, 
+                    background: 'var(--color-table-header)', 
+                    zIndex: 1,
+                    transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease',
+                  }}>
+                    Teléfono
+                  </th>
+                  <th style={{ 
+                    position: 'sticky', 
+                    top: 0, 
+                    background: 'var(--color-table-header)', 
+                    zIndex: 1,
+                    transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease',
+                  }}>
+                    Estado
+                  </th>
+                  {isAdmin && <th style={{ 
+                    position: 'sticky', 
+                    top: 0, 
+                    background: 'var(--color-table-header)', 
+                    zIndex: 1, 
+                    textAlign: 'right',
+                    transition: 'background 0.25s ease, color 0.25s ease, border-color 0.25s ease',
+                  }}>
+                    Acciones
+                  </th>}
                 </tr>
               </thead>
               <tbody>
                 {paginatedItems.length === 0 ? (
-                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem 0', color: 'var(--color-gray-400)' }}>
                     <Truck style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin proveedores
                   </td></tr>
                 ) : (
                   paginatedItems.map((s) => (
                     <tr key={s.id}>
-                      <td style={{ fontWeight: 500 }}>{s.name}</td>
-                      <td style={{ color: '#64748b' }}>{s.contact_name ?? '—'}</td>
-                      <td>{s.email ? <a href={`mailto:${s.email}`} style={{ color: '#0b3b4c', textDecoration: 'none', fontSize: '0.875rem' }}>{s.email}</a> : '—'}</td>
-                      <td style={{ color: '#64748b' }}>{s.phone ?? '—'}</td>
+                      <td style={{ fontWeight: 500, color: 'var(--color-gray-800)' }}>{s.name}</td>
+                      <td style={{ color: 'var(--color-gray-500)' }}>{s.contact_name ?? '—'}</td>
+                      <td>
+                        {s.email ? (
+                          <a 
+                            href={`mailto:${s.email}`} 
+                            style={{ 
+                              color: 'var(--color-primary)', 
+                              textDecoration: 'none', 
+                              fontSize: '0.875rem',
+                              transition: 'color 0.15s',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                          >
+                            {s.email}
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td style={{ color: 'var(--color-gray-500)' }}>{s.phone ?? '—'}</td>
                       <td>
                         <span className={`badge ${s.active ? 'badge-success' : 'badge-neutral'}`}>
                           {s.active ? 'Activo' : 'Inactivo'}
@@ -165,10 +278,36 @@ export default function Suppliers() {
                       {isAdmin && (
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem' }}>
-                            <button onClick={() => openEdit(s)} style={{ padding: '0.375rem', borderRadius: '0.5rem', border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>
+                            <button 
+                              onClick={() => openEdit(s)} 
+                              style={{ 
+                                padding: '0.375rem', 
+                                borderRadius: '0.5rem', 
+                                border: 'none', 
+                                background: 'transparent', 
+                                color: 'var(--color-gray-400)', 
+                                cursor: 'pointer',
+                                transition: 'color 0.15s',
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-400)'}
+                            >
                               <Pencil style={{ width: '1rem', height: '1rem' }} />
                             </button>
-                            <button onClick={() => handleDelete(s)} style={{ padding: '0.375rem', borderRadius: '0.5rem', border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>
+                            <button 
+                              onClick={() => handleDelete(s)} 
+                              style={{ 
+                                padding: '0.375rem', 
+                                borderRadius: '0.5rem', 
+                                border: 'none', 
+                                background: 'transparent', 
+                                color: 'var(--color-gray-400)', 
+                                cursor: 'pointer',
+                                transition: 'color 0.15s',
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-error)'}
+                              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-400)'}
+                            >
                               <Trash2 style={{ width: '1rem', height: '1rem' }} />
                             </button>
                           </div>
@@ -199,7 +338,7 @@ export default function Suppliers() {
             <div style={{ gridColumn: 'span 2' }}>
               <label className="label">Nombre de la empresa *</label>
               <input {...register('name')} className="input" placeholder="Distribuidora XYZ" />
-              {errors.name && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.name.message}</p>}
+              {errors.name && <p style={{ fontSize: '0.75rem', color: 'var(--color-error-text)', marginTop: '0.25rem' }}>{errors.name.message}</p>}
             </div>
             <div>
               <label className="label">Nombre del contacto</label>
@@ -208,12 +347,12 @@ export default function Suppliers() {
             <div>
               <label className="label">Teléfono</label>
               <input {...register('phone')} className="input" placeholder="+52 55 1234 5678" />
-              {errors.phone && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.phone.message}</p>}
+              {errors.phone && <p style={{ fontSize: '0.75rem', color: 'var(--color-error-text)', marginTop: '0.25rem' }}>{errors.phone.message}</p>}
             </div>
             <div>
               <label className="label">Email</label>
               <input {...register('email')} type="email" className="input" placeholder="contacto@empresa.com" />
-              {errors.email && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>{errors.email.message}</p>}
+              {errors.email && <p style={{ fontSize: '0.75rem', color: 'var(--color-error-text)', marginTop: '0.25rem' }}>{errors.email.message}</p>}
             </div>
             <div>
               <label className="label">Dirección</label>
@@ -221,12 +360,60 @@ export default function Suppliers() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input type="checkbox" id="sup-active" {...register('active')} style={{ width: '1rem', height: '1rem', accentColor: '#0b3b4c' }} />
-            <label htmlFor="sup-active" style={{ fontSize: '0.875rem', color: '#64748b' }}>Proveedor activo</label>
+            <input 
+              type="checkbox" 
+              id="sup-active" 
+              {...register('active')} 
+              style={{ width: '1rem', height: '1rem', accentColor: 'var(--color-primary)' }} 
+            />
+            <label htmlFor="sup-active" style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
+              Proveedor activo
+            </label>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
-            <button type="button" onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#f1f5f9', color: '#334155', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>Cancelar</button>
-            <button type="submit" disabled={saving} style={{ flex: 1, padding: '0.5rem 0', borderRadius: '0.5rem', background: '#0b3b4c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}>{saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}{editing ? 'Guardar' : 'Crear'}</button>
+            <button 
+              type="button" 
+              onClick={() => setModalOpen(false)} 
+              style={{ 
+                flex: 1, 
+                padding: '0.5rem 0', 
+                borderRadius: '0.5rem', 
+                background: 'var(--color-gray-100)', 
+                color: 'var(--color-gray-700)', 
+                border: 'none', 
+                cursor: 'pointer', 
+                fontWeight: 500, 
+                fontSize: '0.875rem',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-gray-200)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-gray-100)'}
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              disabled={saving} 
+              style={{ 
+                flex: 1, 
+                padding: '0.5rem 0', 
+                borderRadius: '0.5rem', 
+                background: 'var(--color-primary)', 
+                color: '#fff', 
+                border: 'none', 
+                cursor: 'pointer', 
+                fontWeight: 500, 
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                transition: 'background 0.15s',
+              }}
+            >
+              {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
+              {editing ? 'Guardar' : 'Crear'}
+            </button>
           </div>
         </form>
       </Modal>

@@ -34,9 +34,48 @@ function ProtectedRoute() {
 }
 
 function AdminRoute() {
-  const { profile } = useAuthStore();
-  if (profile?.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  const { profile, loading } = useAuthStore();
+  console.log('🔍 AdminRoute - profile:', profile, 'loading:', loading);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-body)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-brand-600)' }} />
+      </div>
+    );
+  }
+  if (!profile) {
+    console.warn('⚠️ AdminRoute: profile is null, showing spinner');
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-body)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-brand-600)' }} />
+      </div>
+    );
+  }
+  if (profile.role !== 'admin') {
+    console.log('➡️ AdminRoute: redirigiendo a /nueva-venta (rol:', profile.role, ')');
+    return <Navigate to="/nueva-venta" replace />;
+  }
+  console.log('✅ AdminRoute: permitiendo acceso (admin)');
   return <Outlet />;
+}
+
+function RootRedirect() {
+  const { profile, loading } = useAuthStore();
+  console.log('🔍 RootRedirect - profile:', profile, 'loading:', loading);
+
+  if (loading || !profile) {
+    console.log('⏳ RootRedirect: esperando perfil...');
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-body)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-brand-600)' }} />
+      </div>
+    );
+  }
+
+  const isAdmin = profile.role === 'admin';
+  console.log(`➡️ RootRedirect: redirigiendo a ${isAdmin ? '/dashboard' : '/nueva-venta'} (rol: ${profile.role})`);
+  return <Navigate to={isAdmin ? '/dashboard' : '/nueva-venta'} replace />;
 }
 
 export default function App() {
@@ -77,27 +116,27 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route index element={<RootRedirect />} />
+
             <Route path="/productos" element={<Products />} />
-            <Route path="/movimientos" element={<Movements />} />
             <Route path="/nueva-venta" element={<NewSale />} />
             <Route path="/ventas" element={<Sales />} />
+            <Route path="/corte-de-caja" element={<CashRegisterClosing />} />
+            <Route path="/entradas" element={<InventoryEntries />} />
+            <Route path="/ajustes" element={<InventoryAdjustments />} />
 
-            {/* Admin-only routes */}
             <Route element={<AdminRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/movimientos" element={<Movements />} />
               <Route path="/categorias" element={<Categories />} />
               <Route path="/proveedores" element={<Suppliers />} />
-              <Route path="/entradas" element={<InventoryEntries />} />
-              <Route path="/ajustes" element={<InventoryAdjustments />} />
-              <Route path="/corte-de-caja" element={<CashRegisterClosing />} />
               <Route path="/reportes" element={<Reports />} />
               <Route path="/auditoria" element={<AuditLog />} />
               <Route path="/usuarios" element={<Users />} />
             </Route>
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

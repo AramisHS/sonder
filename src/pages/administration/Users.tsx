@@ -63,12 +63,20 @@ export default function Users() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
       {/* Header */}
       <div>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b' }}>Usuarios</h1>
-        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{profiles.length} usuarios registrados</p>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-gray-800)' }}>Usuarios</h1>
+        <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>{profiles.length} usuarios registrados</p>
       </div>
 
       {/* Info Callout */}
-      <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', fontSize: '0.875rem' }}>
+      <div style={{ 
+        padding: '1rem', 
+        borderRadius: 'var(--radius-lg)', 
+        background: 'var(--color-gray-50)', 
+        border: '1px solid var(--color-card-border)', 
+        color: 'var(--color-gray-800)', 
+        fontSize: '0.875rem',
+        transition: 'background 0.25s ease, border-color 0.25s ease, color 0.25s ease',
+      }}>
         <p style={{ margin: 0 }}>
           <strong>Nota:</strong> Los nuevos usuarios se registran desde la pantalla de inicio de sesión. El primer usuario registrado es automáticamente administrador.
         </p>
@@ -76,7 +84,7 @@ export default function Users() {
 
       {/* Search */}
       <div style={{ position: 'relative', width: '100%' }}>
-        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8' }} />
+        <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: 'var(--color-gray-400)' }} />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -89,7 +97,7 @@ export default function Users() {
       {/* Table */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: '#0b3b4c' }} />
+          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite', color: 'var(--color-primary)' }} />
         </div>
       ) : (
         <div className="table-container">
@@ -106,7 +114,7 @@ export default function Users() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem 0', color: '#94a3b8' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem 0', color: 'var(--color-gray-400)' }}>
                     <User style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     Sin usuarios
                   </td>
@@ -128,15 +136,15 @@ export default function Users() {
                             fontSize: '0.75rem',
                             fontWeight: 'bold',
                             flexShrink: 0,
-                            background: p.role === 'admin' ? '#0b3b4c' : '#64748b',
+                            background: p.role === 'admin' ? 'var(--color-primary)' : 'var(--color-gray-500)',
                           }}
                         >
                           {p.full_name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div>
-                          <p style={{ fontWeight: 500, color: '#1e293b' }}>{p.full_name || 'Sin nombre'}</p>
+                          <p style={{ fontWeight: 500, color: 'var(--color-gray-800)' }}>{p.full_name || 'Sin nombre'}</p>
                           {p.id === currentProfile?.id && (
-                            <span style={{ fontSize: '0.75rem', color: '#0b3b4c' }}>Tú</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>Tú</span>
                           )}
                         </div>
                       </div>
@@ -144,9 +152,9 @@ export default function Users() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                         {p.role === 'admin' ? (
-                          <Shield style={{ width: '0.875rem', height: '0.875rem', color: '#0b3b4c' }} />
+                          <Shield style={{ width: '0.875rem', height: '0.875rem', color: 'var(--color-primary)' }} />
                         ) : (
-                          <User style={{ width: '0.875rem', height: '0.875rem', color: '#94a3b8' }} />
+                          <User style={{ width: '0.875rem', height: '0.875rem', color: 'var(--color-gray-400)' }} />
                         )}
                         <span className={`badge ${p.role === 'admin' ? 'badge-brand' : 'badge-neutral'}`}>
                           {p.role === 'admin' ? 'Administrador' : 'Empleado'}
@@ -158,21 +166,21 @@ export default function Users() {
                         {p.active ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td style={{ color: '#64748b' }}>{new Date(p.created_at).toLocaleDateString('es-MX')}</td>
+                    <td style={{ color: 'var(--color-gray-500)' }}>{new Date(p.created_at).toLocaleDateString('es-MX')}</td>
                     <td style={{ textAlign: 'right' }}>
                       <button
                         onClick={() => openEdit(p)}
                         style={{
                           padding: '0.375rem',
-                          borderRadius: '0.5rem',
+                          borderRadius: 'var(--radius-md)',
                           background: 'transparent',
                           border: 'none',
-                          color: '#94a3b8',
+                          color: 'var(--color-gray-400)',
                           cursor: 'pointer',
                           transition: 'color 0.15s',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = '#0b3b4c'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-400)'}
                       >
                         <Pencil style={{ width: '1rem', height: '1rem' }} />
                       </button>
@@ -191,7 +199,7 @@ export default function Users() {
           <div>
             <label className="label">Nombre completo</label>
             <input {...register('full_name')} className="input" />
-            {errors.full_name && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{errors.full_name.message}</p>}
+            {errors.full_name && <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--color-error-text)' }}>{errors.full_name.message}</p>}
           </div>
           <div>
             <label className="label">Rol</label>
@@ -205,9 +213,9 @@ export default function Users() {
               type="checkbox"
               id="user-active"
               {...register('active')}
-              style={{ width: '1rem', height: '1rem', accentColor: '#0b3b4c' }}
+              style={{ width: '1rem', height: '1rem', accentColor: 'var(--color-primary)' }}
             />
-            <label htmlFor="user-active" style={{ fontSize: '0.875rem', color: '#64748b' }}>Usuario activo</label>
+            <label htmlFor="user-active" style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>Usuario activo</label>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
             <button
@@ -216,17 +224,23 @@ export default function Users() {
               style={{
                 flex: 1,
                 padding: '0.5rem 0',
-                borderRadius: '0.5rem',
-                background: '#f1f5f9',
-                color: '#334155',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-gray-100)',
+                color: 'var(--color-gray-700)',
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 500,
                 fontSize: '0.875rem',
-                transition: 'background 0.15s',
+                transition: 'background 0.15s, color 0.15s',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-gray-200)';
+                e.currentTarget.style.color = 'var(--color-gray-900)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--color-gray-100)';
+                e.currentTarget.style.color = 'var(--color-gray-700)';
+              }}
             >
               Cancelar
             </button>
@@ -235,8 +249,8 @@ export default function Users() {
               style={{
                 flex: 1,
                 padding: '0.5rem 0',
-                borderRadius: '0.5rem',
-                background: '#0b3b4c',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-primary)',
                 color: '#ffffff',
                 border: 'none',
                 cursor: 'pointer',
@@ -248,8 +262,12 @@ export default function Users() {
                 gap: '0.5rem',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#0a2f3d'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#0b3b4c'}
+              onMouseEnter={(e) => {
+                if (!saving) e.currentTarget.style.background = 'var(--color-primary-dark)';
+              }}
+              onMouseLeave={(e) => {
+                if (!saving) e.currentTarget.style.background = 'var(--color-primary)';
+              }}
               disabled={saving}
             >
               {saving && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
