@@ -30,8 +30,6 @@ Sonder es una plataforma web diseñada para centralizar las operaciones diarias 
 
 Permite administrar inventario, procesar ventas, generar reportes, controlar usuarios y monitorear indicadores clave desde una interfaz moderna, rápida y fácil de usar.
 
-El objetivo es reducir procesos manuales y proporcionar información útil para la toma de decisiones.
-
 ---
 
 ## ✨ Características
@@ -110,8 +108,6 @@ El objetivo es reducir procesos manuales y proporcionar información útil para 
 ### Vista General
 
 ![Demo](./docs/demo.gif)
-
-> Puedes grabar un GIF navegando por todo el sistema para mostrar sus funcionalidades principales.
 
 ---
 
